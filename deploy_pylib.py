@@ -2,7 +2,9 @@
 import subprocess
 import os
 
-libname = 
+libname = None
+if libname is None:
+	libname = raw_input('Please enter libname or modify it in deploy_pylib.py:')
 
 
 with open('setup.py','r') as f:

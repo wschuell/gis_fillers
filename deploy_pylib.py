@@ -4,7 +4,7 @@ import os
 
 libname = None
 if libname is None:
-	libname = raw_input('Please enter libname or modify it in deploy_pylib.py:')
+	libname = input('Please enter libname or modify it in deploy_pylib.py:')
 
 
 with open('setup.py','r') as f:

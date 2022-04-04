@@ -26,23 +26,7 @@ conninfo = {
 # }
 
 
-
-######## Filling in the DB; all files automatically downloaded (not if data already present in the DB)
-
 db = Database(**conninfo)
-
-# db.clean_db() # Erases all data
-db.init_db() # Creates the structure
-
-db.add_filler(zones.zaehlsprengel.ZaehlsprengelFiller()) # Fills in data for AT
-db.add_filler(zones.zaehlsprengel.SimplifiedZSFiller()) # Fills in data for AT but with lower precision for geometries (uses mapshaper - to be installed separately)
-db.add_filler(zones.zaehlsprengel.PLZFiller()) # Fills in zip code data for AT
-db.add_filler(zones.countries.CountriesFiller())
-
-db.fill_db()
-
-
-
 
 
 ######## Getter wrappers around complex queries (see the corresponding imported files)

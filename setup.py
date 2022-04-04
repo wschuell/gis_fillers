@@ -7,16 +7,16 @@ from setuptools import setup, find_packages
 
 
 def version():
-    with open('PYLIB/_version.py') as f:
+    with open('gis_fillers/_version.py') as f:
         return re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read()).group(1)
 
 def requirements():
   with open('requirements.txt') as f:
     return f.readlines()
 
-setup(name='PYLIB',
+setup(name='gis_fillers',
       version=version(),
-      packages=['PYLIB'],#find_packages(),
+      packages=['gis_fillers'],#find_packages(),
       install_requires=[requirements()],
       author='',
       author_email='',

@@ -2,7 +2,7 @@
 import subprocess
 import os
 
-libname = 
+libname = 'gis_fillers'
 
 
 with open('setup.py','r') as f:

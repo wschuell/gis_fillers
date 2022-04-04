@@ -36,6 +36,7 @@ db.init_db() # Creates the structure
 
 db.add_filler(zones.zaehlsprengel.ZaehlsprengelFiller()) # Fills in data for AT
 db.add_filler(zones.zaehlsprengel.SimplifiedZSFiller()) # Fills in data for AT but with lower precision for geometries (uses mapshaper - to be installed separately)
+db.add_filler(zones.zaehlsprengel.PLZFiller()) # Fills in zip code data for AT
 db.add_filler(zones.countries.CountriesFiller())
 
 db.fill_db()
@@ -72,6 +73,7 @@ plt.show()
 
 for title,query in [
 		('100 first zones in the DB (random)','''SELECT geom FROM gis_data LIMIT 100;'''),
+
 		('20 first countries','''SELECT gd.geom FROM zone_levels zl
 						INNER JOIN gis_types gt
 						ON gt.name='zaehlsprengel'
@@ -80,6 +82,7 @@ for title,query in [
 						ON gd.gis_type=gt.id  AND gd.zone_level=zl.id
 						LIMIT 20
 							;'''),
+
 		('all countries','''SELECT gd.geom FROM zone_levels zl
 						INNER JOIN gis_types gt
 						ON gt.name='zaehlsprengel'
@@ -87,6 +90,7 @@ for title,query in [
 						INNER JOIN gis_data gd
 						ON gd.gis_type=gt.id  AND gd.zone_level=zl.id
 							;'''),
+
 		('40 countries closest to Austria by center','''
 			WITH at_gd AS (SELECT gd.center FROM zones z
 							INNER JOIN zone_levels zl
@@ -106,7 +110,8 @@ for title,query in [
 						ORDER BY ST_Distance((SELECT center FROM at_gd),gd.center) ASC
 						LIMIT 40
 							;'''),
-		('40 countries closest to Austria by projection','''
+
+		('40 countries closest to Austria by geometry','''
 			WITH at_gd AS (SELECT gd.geom FROM zones z
 							INNER JOIN zone_levels zl
 							ON z.code ='AT'

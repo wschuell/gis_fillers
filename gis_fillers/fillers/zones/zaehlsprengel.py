@@ -7,7 +7,7 @@ from psycopg2 import extras
 import shapefile
 import json
 import subprocess
-from syri_db import fillers
+from .. import fillers
 
 
 

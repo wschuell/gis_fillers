@@ -8,3 +8,4 @@ shapely
 scipy
 matplotlib
 camelot-py[cv]
+osmnx

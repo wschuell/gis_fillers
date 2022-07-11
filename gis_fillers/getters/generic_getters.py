@@ -28,6 +28,7 @@ class Getter(object):
 	For writing children, just change the 'get' method, and do not forget the commit at the end.
 	This class is just an abstract 'mother' class
 	"""
+	columns = None
 
 	def __init__(self,db=None,name=None,data_folder=None):#,file_info=None):
 		if name is None:
@@ -52,7 +53,7 @@ class Getter(object):
 		if raw_result:
 			return query_result
 		else:
-			df = pd.DataFrame(self.parse_results(query_result=query_result))
+			df = pd.DataFrame(self.parse_results(query_result=query_result),columns=self.columns)
 			return df
 
 	def query(self):

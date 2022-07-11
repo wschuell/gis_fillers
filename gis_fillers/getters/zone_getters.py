@@ -12,7 +12,7 @@ class PopulationGetter(Getter):
 	'''
 	Returns a geopandas dataframe with population per defined area level
 	'''
-
+	columns = ('Zone','ZoneID','population','geometry')
 	def __init__(self,zone_level='bezirk',zone_attribute='population',simplified=True,**kwargs):
 		Getter.__init__(self,**kwargs)
 		self.zone_level = zone_level
@@ -85,6 +85,8 @@ class PopulationDensityGetter(PopulationGetter):
 	Returns a geopandas dataframe with population density in people/km2 per defined area level
 	'''
 
+	columns = ('Zone','ZoneID','population_density','geometry')
+	
 	def parse_results(self,query_result):
 		return [{'Zone':bez,'ZoneID':zid,'population_density':int(pop)/area,'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvlv,pop,bez,geo,area) in query_result]
 

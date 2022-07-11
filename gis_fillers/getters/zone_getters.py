@@ -75,7 +75,7 @@ class PopulationGetter(Getter):
 	def get(self,db,**kwargs):
 		db.cursor.execute(self.query(),self.query_attributes())
 		query_result = list(db.cursor.fetchall())
-		gdf = gpd.GeoDataFrame(self.parse_results(query_result=query_result),crs='epsg:4326')
+		gdf = gpd.GeoDataFrame(self.parse_results(query_result=query_result),crs='epsg:4326',columns=self.columns)
 		return gdf
 
 

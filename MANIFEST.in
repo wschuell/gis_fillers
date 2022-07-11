@@ -1,0 +1,2 @@
+include gis_fillers/*.sql
+recursive-include gis_fillers *.py

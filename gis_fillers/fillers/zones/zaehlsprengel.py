@@ -28,28 +28,30 @@ class ZaehlsprengelFiller(fillers.Filler):
 	"""
 
 	def __init__(self,
-					gis_info="http://data.statistik.gv.at/data/OGDEXT_ZSP_1_STATISTIK_AUSTRIA_20200101.zip",
-					gis_info_name="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_20200101",
-					gis_info_fullname="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_20200101/STATISTIK_AUSTRIA_ZSP_20200101Polygon.shp",
-					geojson_gis_info_name="STATISTIK_AUSTRIA_ZSP_20200101.geojson",
-					pop_info="https://www.statistik.at/wcm/idc/idcplg?IdcService=GET_NATIVE_FILE&RevisionSelectionMethod=LatestReleased&dDocName=103418",
+					gis_info="https://data.statistik.gv.at/data/OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101.zip",
+					gis_info_name="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101",
+					gis_info_fullname="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101/STATISTIK_AUSTRIA_ZSP_{YEAR}0101.shp",
+					geojson_gis_info_name="STATISTIK_AUSTRIA_ZSP_{YEAR}0101.geojson",
+					pop_info="https://statistik.at/fileadmin/pages/405/Bevoelkerung_am_1.1.{YEAR}_nach_Zaehlsprengel__Gebietsstand_1.1.{YEAR}_.ods",
 					### CAUTION!: the file available on the above link is the last year available. If not matching the other files years,
 					### leads to mismatches as Zaehlsprengel are redefined each year with minor modification
-					pop_info_name='einwohnerzahl_nach_zaehlsprengel_1.1.2020_gebietsstand_1.1.2020',
-					bezirk_info='http://www.statistik.at/verzeichnis/reglisten/polbezirke.csv',
+					# pop_info_name='einwohnerzahl_nach_zaehlsprengel_1.1.2020_gebietsstand_1.1.2020',
+					bezirk_info='https://www.statistik.at/verzeichnis/reglisten/polbezirke.csv',
 					bezirk_info_name='polbezirke.csv',
 					simplified=False,
 					include_population=True,
 					force=False,
 					remove_bz_900=True,
+					year=2022,
 					**kwargs):
 		self.force = force
-		self.gis_info = gis_info
-		self.gis_info_name = gis_info_name
-		self.gis_info_fullname = gis_info_fullname
-		self.geojson_gis_info_name = geojson_gis_info_name
-		self.pop_info = pop_info
-		self.pop_info_name = pop_info_name
+		self.year = year
+		self.gis_info = gis_info.format(YEAR=self.year)
+		self.gis_info_name = gis_info_name.format(YEAR=self.year)
+		self.gis_info_fullname = gis_info_fullname.format(YEAR=self.year)
+		self.geojson_gis_info_name = geojson_gis_info_name.format(YEAR=self.year)
+		self.pop_info = pop_info.format(YEAR=self.year)
+		self.pop_info_name = '.'.join(self.pop_info.split('/')[-1].split('.')[:-1])
 		self.bezirk_info = bezirk_info
 		self.bezirk_info_name = bezirk_info_name
 		self.simplified = simplified
@@ -102,12 +104,13 @@ class ZaehlsprengelFiller(fillers.Filler):
 				self.download(url=self.bezirk_info,destination=os.path.join(data_folder,self.bezirk_info_name))
 
 			#pop_info
+			file_ext = self.pop_info.split('.')[-1]
 			if not os.path.exists(os.path.join(data_folder,self.pop_info_name+'.csv')):
-				if not os.path.exists(os.path.join(data_folder,self.pop_info_name+'.xlsx')):
+				if not os.path.exists(os.path.join(data_folder,self.pop_info_name+'.'+file_ext)):
 					self.logger.info('Downloading {}'.format(self.pop_info))
-					self.download(url=self.pop_info,destination=os.path.join(data_folder,self.pop_info_name)+'.xlsx',wget=True)
+					self.download(url=self.pop_info,destination=os.path.join(data_folder,self.pop_info_name)+'.'+file_ext,wget=True)
 					# raise NotImplementedError('Complex JS query pattern, please download manually')
-				self.convert_xlsx(orig_file=os.path.join(data_folder,self.pop_info_name+'.xlsx'),destination=os.path.join(data_folder,self.pop_info_name+'.csv'))
+				self.convert_spreadsheet(orig_file=os.path.join(data_folder,self.pop_info_name+'.'+file_ext),destination=os.path.join(data_folder,self.pop_info_name+'.csv'))
 
 	def apply(self):
 		#filling zones info at different levels
@@ -146,8 +149,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
-			ans.pop(-1)
-			ans.pop(-1) # two last lines are just empty/info
+			ans = self.clean_reader(ans) # two last lines are just empty/info
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zones(id,name,level) VALUES(%s,%s,(SELECT id FROM zone_levels WHERE name='zaehlsprengel')) ON CONFLICT DO NOTHING;''',((int(r[3]),r[4]) for r in ans))
 		self.db.connection.commit()
 
@@ -162,8 +164,8 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
-			ans.pop(-1)
-			ans.pop(-1) # two last lines are just empty/info
+			
+			ans = self.clean_reader(ans) # two last lines are just empty/info
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zone_attributes(zone,zone_level,attribute,int_value)--,scenario)
 						SELECT %s, zl.id, zat.id,%s--,s.id
 						FROM zone_levels zl
@@ -218,6 +220,14 @@ class ZaehlsprengelFiller(fillers.Filler):
 		cmd_output = subprocess.check_output(cmd.split(' '))
 		self.logger.info(cmd_output)
 
+	def clean_reader(self,reader):
+		ans = reader
+		while ans[-1]=='' or ans[-1][0].startswith('Q: STATISTIK AUSTRIA, Statistik des Bevölkerungsstandes.') or ans[-1][0].startswith('"Q: STATISTIK AUSTRIA, Statistik des Bevölkerungsstandes.'):
+			ans.pop(-1)
+		# two last lines are just empty/info 
+		return ans
+
+
 	def fill_gis_zs(self,filename=None,gis_type=None):
 		'''
 		distinguishing between raw shapefile (original highly detailed geoms), or processed geojsonfile (simplified via mapshaper)
@@ -248,7 +258,6 @@ class ZaehlsprengelFiller(fillers.Filler):
 		else:
 			raise ValueError('ZS filetype unknown:',filetype)
 		self.db.connection.commit()
-
 	def fill_gemeinde(self,filename=None):
 		self.logger.info('Filling Gemeinde')
 		if filename is None:
@@ -260,8 +269,8 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
-			ans.pop(-1)
-			ans.pop(-1) # two last lines are just empty/info
+			ans = self.clean_reader(ans)
+			
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zones(id,name,level) VALUES(%s,%s,(SELECT id FROM zone_levels WHERE name='gemeinde')) ON CONFLICT DO NOTHING;''',((int(r[1]),r[2]) for r in ans))
 		self.db.connection.commit()
 

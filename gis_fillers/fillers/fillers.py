@@ -80,6 +80,7 @@ class Filler(object):
 		self.logger.info('Downloading {}'.format(url))
 		if not wget:
 			r = requests.get(url, allow_redirects=True)
+			r.raise_for_status()
 			with open(destination, 'wb') as f:
 				f.write(r.content)
 		else:
@@ -95,29 +96,45 @@ class Filler(object):
 		if clean_zip:
 			os.remove(orig_file)
 
-	def convert_xlsx(self,orig_file,destination,clean_xlsx=False):
+	def get_spreadsheet_engine(self,orig_file):
+		file_ext = orig_file.split('.')[-1]
+		if file_ext == 'xlsx':
+			engine = 'openpyxl'
+		elif file_ext == 'ods':
+			engine = 'odf'
+		else:
+			raise ValueError(f'File extension not recognized for spreadsheet: {file_ext}')
+
+	def convert_spreadsheet(self,orig_file,destination,clean_orig=False,engine=None):
 		self.logger.info('Converting {} to CSV'.format(orig_file))
-		data_xls = pd.read_excel(orig_file, index_col=None, engine='openpyxl')
-		data_xls.to_csv(destination,index=False,header=None ,encoding='utf-8')
-		if clean_xlsx:
+		if engine is None:
+			engine = self.get_spreadsheet_engine(orig_file=orig_file)
+		data = pd.read_excel(orig_file, index_col=None, engine=engine)
+		data.to_csv(destination,index=False,header=None ,encoding='utf-8')
+		if clean_orig:
 			os.remove(orig_file)
 
-	def convert_xlsx_sheets(self,orig_file,destination,sheet_names = None, clean_xlsx=False):
+	def convert_spreadhseet_sheets(self,orig_file,destination,sheet_names = None, clean_orig=False,engine=None):
 		self.logger.info('Converting {} sheets to CSVs'.format(orig_file))
-		data_xls = pd.read_excel(orig_file, index_col=None, engine='openpyxl', sheet_name = sheet_names)
+		if engine is None:
+			engine = self.get_spreadsheet_engine(orig_file=orig_file)
+		data = pd.read_excel(orig_file, index_col=None, engine=engine, sheet_name = sheet_names)
 
-		names = list(data_xls.keys())
+		names = list(data.keys())
 		if not os.path.exists(destination):
 			os.makedirs(destination)
 		for name in names:
-			data_xls[name].to_csv(os.path.join(destination,'{}.csv'.format(name)),index=False ,encoding='utf-8')
+			data[name].to_csv(os.path.join(destination,'{}.csv'.format(name)),index=False ,encoding='utf-8')
 
-		if clean_xlsx:
+		if clean_orig:
 			os.remove(orig_file)
 
-	def extract_xlsx_sheets(self,orig_file,sheet_names=None):
+	def extract_spreadsheet_sheets(self,orig_file,sheet_names=None,engine=None):
 		self.logger.info('Extracting {} sheets'.format(orig_file))
-		return pd.read_excel(orig_file, index_col=None, engine='openpyxl', sheet_name = sheet_names)
+		
+		if engine is None:
+			engine = self.get_spreadsheet_engine(orig_file=orig_file)
+		return pd.read_excel(orig_file, index_col=None, engine=engine, sheet_name = sheet_names)
 
 
 	def record_file(self,**kwargs):

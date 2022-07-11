@@ -128,10 +128,10 @@ class RoadLengthFiller(fillers.Filler):
 				INNER JOIN zone_levels zl
 				ON zl.name=%(zone_level)s
 				INNER JOIN zones z
-				ON z.level=zl.id
-					INNER JOIN zone_parents zp
-					ON child=z.id AND child_level=z.level
-					AND parent=9 AND parent_level=(SELECT id FROM zone_levels WHERE name='bundesland')
+				ON z.level=zl.id AND z.id=9
+					--INNER JOIN zone_parents zp
+					--ON child=z.id AND child_level=z.level
+					--AND parent=9 AND parent_level=(SELECT id FROM zone_levels WHERE name='bundesland')
 				INNER JOIN gis_types gt
 				ON gt.name=%(gis_type)s
 				INNER JOIN gis_data gd

@@ -1,2 +1,2 @@
-include *.sql
-recursive-include . *.py
+include gis_fillers/*.sql
+recursive-include gis_fillers *.py

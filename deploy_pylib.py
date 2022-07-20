@@ -7,13 +7,14 @@ if libname is None:
 	libname = input('Please enter libname or modify it in deploy_pylib.py:')
 
 
-with open('setup.py','r') as f:
-	txt = f.read()
+for filename in ('setup.py','MANIFEST.in'):
+	with open(filename,'r') as f:
+		txt = f.read()
 
-txt2 = libname.join(txt.split('PYLIB'))
+	txt2 = libname.join(txt.split('PYLIB'))
 
-with open('setup.py','w') as f:
-	f.write(txt2)
+	with open(filename,'w') as f:
+		f.write(txt2)
 
 
 

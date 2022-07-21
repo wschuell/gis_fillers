@@ -9,6 +9,8 @@ import hashlib
 import numpy as np
 
 
+from db_fillers import Database as TemplateDatabase
+
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
@@ -37,7 +39,7 @@ def split_sql_init(script):
 	formatted = '\n'.join([l for l in lines if l[:2]!='--'])
 	return formatted.split(';')[:-1]
 
-class Database(object):
+class Database(TemplateDatabase):
 	"""
 	This class creates a database object with the main structure, with a few methods  to manipulate it.
 	To fill it, fillers are used (see Filler class).

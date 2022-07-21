@@ -15,23 +15,30 @@ class CountriesFiller(fillers.Filler):
 	"""
 	Fills in countries GIS shapes in zaehlsprengel gis_type
 	"""
-
+	year_list = (2001,2006,2010,2013,2016,2020)
 	def __init__(self,
-					gis_info="https://gisco-services.ec.europa.eu/distribution/v2/countries/download/ref-countries-2020-01m.geojson.zip",
-					gis_info_name="ref-countries-2020-01m.geojson",
-					geojson_gis_info_name="ref-countries-2020-01m.geojson",
-					fullgeojson_gis_info_name="ref-countries-2020-01m.geojson/CNTR_RG_01M_2020_4326.geojson",
-					LBgeojson_gis_info_name="ref-countries-2020-01m.geojson/CNTR_LB_2020_4326.geojson",
+					gis_info="https://gisco-services.ec.europa.eu/distribution/v2/countries/download/ref-countries-{YEAR}-01m.geojson.zip",
+					gis_info_name="ref-countries-{YEAR}-01m.geojson",
+					geojson_gis_info_name="ref-countries-{YEAR}-01m.geojson",
+					fullgeojson_gis_info_name="ref-countries-{YEAR}-01m.geojson/CNTR_RG_01M_{YEAR}_4326.geojson",
+					LBgeojson_gis_info_name="ref-countries-{YEAR}-01m.geojson/CNTR_LB_{YEAR}_4326.geojson",
 					include_austria=False,
 					force=False,
+					year=None,
 					**kwargs):
 		self.force = force
-		self.gis_info = gis_info
-		self.gis_info_name = gis_info_name
-		self.geojson_gis_info_name = geojson_gis_info_name
-		self.fullgeojson_gis_info_name = fullgeojson_gis_info_name
-		self.LBgeojson_gis_info_name = LBgeojson_gis_info_name
+		if year is None:
+			self.year = self.year_list[-1]
+		else:
+			self.year = year
+		self.gis_info = gis_info.format(YEAR=self.year)
+		self.gis_info_name = gis_info_name.format(YEAR=self.year)
+		self.geojson_gis_info_name = geojson_gis_info_name.format(YEAR=self.year)
+		self.fullgeojson_gis_info_name = fullgeojson_gis_info_name.format(YEAR=self.year)
+		self.LBgeojson_gis_info_name = LBgeojson_gis_info_name.format(YEAR=self.year)
 		self.gis_type = 'zaehlsprengel'
+		if self.year not in self.year_list:
+			self.logger.warning('Year {} may not be available for countries GIS data; available years should be:{}'.format(self.year,self.year_list))
 		fillers.Filler.__init__(self,name='countries',**kwargs)
 
 	def prepare(self):

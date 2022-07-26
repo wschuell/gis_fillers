@@ -30,10 +30,6 @@ except ImportError:
 
 
 
-with open(os.path.join(os.path.dirname(__file__),'init_script.sql'),'r') as f:
-	DB_INIT = f.read()
-
-
 def split_sql_init(script):
 	lines = script.split('\n')
 	formatted = '\n'.join([l for l in lines if l[:2]!='--'])

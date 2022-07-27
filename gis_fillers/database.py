@@ -42,8 +42,8 @@ class Database(TemplateDatabase):
 	The object uses a specific data folder and a list of files used for the fillers, with name, keyword, and potential download link. (move to filler class?)
 	"""
 
-	def clean_db(self,gis_data_stay=False):
-		self.logger.info('Cleaning DB')
+	def clean_db(self,gis_data_stay=False,commit=True,**kwargs):
+		TemplateDatabase.clean_db(self,commit=False,**kwargs)
 		self.cursor.execute('DROP TABLE IF EXISTS plz_gemeinde CASCADE;')
 		self.cursor.execute('DROP TABLE IF EXISTS data_sources CASCADE;')
 		if not gis_data_stay:
@@ -55,4 +55,5 @@ class Database(TemplateDatabase):
 			self.cursor.execute('DROP TABLE IF EXISTS gis_types CASCADE;')
 		self.cursor.execute('DROP TABLE IF EXISTS zone_attribute_types CASCADE;')
 		self.cursor.execute('DROP TABLE IF EXISTS zone_attributes CASCADE;')
-		self.connection.commit()
+		if commit:
+			self.connection.commit()

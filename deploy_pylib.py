@@ -7,7 +7,7 @@ if libname is None:
 	libname = input('Please enter libname or modify it in deploy_pylib.py:')
 
 
-for filename in ('setup.py','MANIFEST.in'):
+for filename in ('setup.py','MANIFEST.in','bump_version.sh'):
 	with open(filename,'r') as f:
 		txt = f.read()
 

@@ -23,9 +23,14 @@ class HexagonsFiller(fillers.Filler):
 			target_zone='AT',
 			target_zone_level='country',
 			gis_type='zaehlsprengel',
+			buffer=True,
+			truncate_shapes=True,
 			**kwargs):
 		fillers.Filler.__init__(self,**kwargs)
 		self.res = res
+		self.buffer = buffer
+		self.buffer_meters = h3.edge_length(self.res,unit='m')*2.
+		self.truncate_shapes = truncate_shapes
 		self.target_zone = target_zone
 		self.target_zone_level = target_zone_level
 		self.zone_level = f'{target_zone_level}_{target_zone}_hexagons_{res}'
@@ -34,8 +39,8 @@ class HexagonsFiller(fillers.Filler):
 	def get_hexagons(self):
 		if not hasattr(self,'hexagons'):
 
-			gdf = gpd.GeoDataFrame.from_postgis(con=self.db.connection,crs=4326,sql='''
-				SELECT gd.geom AS geom FROM zone_levels zl
+			gdf_buffered = gpd.GeoDataFrame.from_postgis(con=self.db.connection,crs=4326,sql='''
+				SELECT ST_Buffer(gd.geom::geography,%(buffer)s) AS geom FROM zone_levels zl
 				INNER JOIN zones z
 				ON zl.id=z.level AND COALESCE(z.code,z.id::text)=%(target_zone)s::text
 				AND zl.name=%(target_zone_level)s
@@ -45,11 +50,29 @@ class HexagonsFiller(fillers.Filler):
 				ON gd.gis_type=gt.id
 				AND gd.zone_id=z.id AND gd.zone_level=z.level
 				;
-				''',params={'target_zone':self.target_zone,'gis_type':self.gis_type,'target_zone_level':self.target_zone_level})
+				''',params={'target_zone':self.target_zone,'gis_type':self.gis_type,'target_zone_level':self.target_zone_level,'buffer':(self.buffer_meters if self.buffer else 0)})
+
+
+			gdf = gpd.GeoDataFrame.from_postgis(con=self.db.connection,crs=4326,sql='''
+				SELECT gd.geom::geography AS geom FROM zone_levels zl
+				INNER JOIN zones z
+				ON zl.id=z.level AND COALESCE(z.code,z.id::text)=%(target_zone)s::text
+				AND zl.name=%(target_zone_level)s
+				INNER JOIN gis_types gt
+				ON gt.name=%(gis_type)s
+				INNER JOIN gis_data gd
+				ON gd.gis_type=gt.id
+				AND gd.zone_id=z.id AND gd.zone_level=z.level
+				;
+				''',params={'target_zone':self.target_zone,'gis_type':self.gis_type,'target_zone_level':self.target_zone_level,'buffer':(self.buffer_meters if self.buffer else 0)})
 
 
 			# Get union of the shape (whole US)
-			union_poly = unary_union(gdf.geometry)
+			union_poly = unary_union(gdf_buffered.geometry)
+			if self.buffer:
+				orig_union_poly = unary_union(gdf.geometry)
+			else:
+				orig_union_poly = union_poly
 
 			# Find the hexagons within the shape boundary using PolyFill
 			hex_list=[]
@@ -67,7 +90,13 @@ class HexagonsFiller(fillers.Filler):
 			ans_hex = pd.DataFrame(hex_list,columns=["hex_id"])
 
 			# Create hexagon geometry and GeoDataFrame
-			ans_hex['geometry'] = [Polygon(h3.h3_to_geo_boundary(x, geo_json=True)) for x in ans_hex["hex_id"]]
+			polygons = [Polygon(h3.h3_to_geo_boundary(x, geo_json=True)) for x in ans_hex["hex_id"]]
+			polygons_truncated = [orig_union_poly.intersection(p) for p in polygons]
+			if self.truncate_shapes:
+				ans_hex['geometry'] = [(p if p.area>0 else None) for p in polygons_truncated]
+			else:
+				ans_hex['geometry'] = [(p if pt.area>0 else None) for pt,p in zip(polygons_truncated,polygons)]
+			ans_hex = ans_hex.dropna()
 			ans_hex = gpd.GeoDataFrame(ans_hex).set_index('hex_id')
 			self.hexagons = ans_hex
 

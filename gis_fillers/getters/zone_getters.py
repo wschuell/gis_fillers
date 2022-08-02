@@ -34,7 +34,7 @@ class PopulationGetter(Getter):
 					INNER JOIN gis_types gt
 					ON gd.gis_type =gt.id AND gt."name" =%(target_gt)s) AS q1
 			INNER JOIN
-				(SELECT z.id,z.level,z.name,SUM(za.int_value) AS population
+				(SELECT z.id,z.level,z.name,SUM(za.int_value::real*COALESCE(zp.share,1.)) AS population
 				FROM zones z
 				INNER JOIN zone_levels zl
 				ON zl.name=%(zone_level)s AND zl.id=z."level"
@@ -48,7 +48,7 @@ class PopulationGetter(Getter):
 				ON zat.id=za.attribute AND zat.name='zs_population'
 				GROUP BY z.id,z.level,z.name
 					UNION
-				SELECT z.id,z.level,z.name,SUM(za.int_value) AS population
+				SELECT z.id,z.level,z.name,SUM(za.int_value::real) AS population
 				FROM zones z
 				INNER JOIN zone_levels zl
 				ON zl.name=%(zone_level)s AND zl.id=z."level" AND 'zaehlsprengel'=%(zone_level)s

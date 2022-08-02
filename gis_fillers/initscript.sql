@@ -35,7 +35,7 @@ FOREIGN KEY (child_level,child) REFERENCES zones(level,id) ON DELETE CASCADE,
 parent BIGINT,
 parent_level INT,
 FOREIGN KEY (parent_level,parent) REFERENCES zones(level,id) ON DELETE CASCADE,
-share REAL DEFAULT NULL,
+share DOUBLE PRECISION DEFAULT NULL,
 PRIMARY KEY(child_level,child,parent_level,parent)
 );
 

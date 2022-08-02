@@ -10,3 +10,4 @@ matplotlib
 camelot-py[cv]
 odfpy
 db_fillers
+h3

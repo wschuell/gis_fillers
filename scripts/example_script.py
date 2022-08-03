@@ -42,15 +42,37 @@ plt.show()
 
 
 
-zone_level = 'zaehlsprengel'
-gdf = zone_getters.PopulationDensityGetter(db=db,zone_level=zone_level).get_result()
+# zone_level = 'zaehlsprengel'
+# gdf = zone_getters.PopulationDensityGetter(db=db,zone_level=zone_level).get_result()
+# # area for density is from the exact definition of the zone geometries, but display uses the simplified ones. Can especially impact the values for zaehlsprengel level in Vienna
+# print(gdf)
+# gdf.plot(column='population_density',legend=True)
+# plt.title('Population density at {} level'.format(zone_level))
+# plt.show()
+
+# available zone levels: country, bundesland, bezirk, gemeinde, zaehlsprengel
+
+## Extra: using hexagons H3 <ref_zone_level>_<ref_zone_code_or_id>_hexagons_<resolution(higher=more precise,0 to 15)>
+# needs to be filled beforehand, see filldb script
+
+zone_level = 'bezirk_922_hexagons_8'
+# zone_level = 'bezirk_922_hexagons_9'
+gdf = zone_getters.PopulationGetter(db=db,zone_level=zone_level,simplified=False).get_result() # gets a geopandas dataframe with various info -- super fast because SQL query behind
+
+print(gdf)
+gdf.plot(column='population', legend=True)
+plt.title('Population at {} level'.format(zone_level))
+plt.show()
+
+
+zone_level = 'country_AT_hexagons_4'
+# zone_level = 'country_AT_hexagons_5'
+gdf = zone_getters.PopulationDensityGetter(db=db,zone_level=zone_level,simplified=False).get_result()
 # area for density is from the exact definition of the zone geometries, but display uses the simplified ones. Can especially impact the values for zaehlsprengel level in Vienna
 print(gdf)
 gdf.plot(column='population_density',legend=True)
 plt.title('Population density at {} level'.format(zone_level))
 plt.show()
-
-# available zone levels: country, bundesland, bezirk, gemeinde, zaehlsprengel
 
 
 ######### Raw queries example: with the countries queries can still take a long time given the detail level (original high precision)

@@ -40,5 +40,10 @@ db.add_filler(zones.zaehlsprengel.SimplifiedZSFiller()) # Fills in data for AT b
 db.add_filler(zones.zaehlsprengel.PLZFiller()) # Fills in zip code data for AT
 db.add_filler(zones.countries.CountriesFiller())
 
+db.add_filler(zones.hexagons.HexagonsFiller(res=8,target_zone=922,target_zone_level='bezirk'))
+# db.add_filler(zones.hexagons.HexagonsFiller(res=9,target_zone=922,target_zone_level='bezirk'))
+db.add_filler(zones.hexagons.HexagonsFiller(res=4,target_zone='AT',target_zone_level='country'))
+# db.add_filler(zones.hexagons.HexagonsFiller(res=5,target_zone='AT',target_zone_level='country'))
+
 db.fill_db()
 

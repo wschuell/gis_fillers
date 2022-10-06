@@ -65,6 +65,8 @@ class ZonesFiller(fillers.Filler):
 		#filling gis data info
 		self.fill_gis()
 
+		self.fill_zs_children()
+
 
 	def fill_zones(self,filename=None):
 
@@ -78,8 +80,8 @@ class ZonesFiller(fillers.Filler):
 			reader = csv.reader(f)
 			if self.header:
 				next(reader)
-			extras.execute_batch(self.db.cursor,'''INSERT INTO zones(code,name,level)
-				VALUES(%(code)s,
+			extras.execute_batch(self.db.cursor,'''INSERT INTO zones(id,code,name,level)
+				VALUES(%(code)s,%(code)s,
 						%(name)s,
 						(SELECT id FROM zone_levels WHERE name=%(zone_level)s))
 					 ON CONFLICT DO NOTHING;''',({'code':r[self.columns['code']],'name':r[self.columns['name']],'zone_level':self.zone_level} for r in reader))
@@ -114,4 +116,29 @@ class ZonesFiller(fillers.Filler):
 					(SELECT id FROM gis_types WHERE name=%(gis_type)s))
 					ON CONFLICT DO NOTHING
 					;''',({'zone_code':r[self.columns['code']],'level':self.zone_level,'geom':r[self.columns['geom']],'gis_type':gis_type} for r in reader))
+		self.db.connection.commit()
+
+
+	def fill_zs_children(self):
+		self.logger.info(f'Filling {self.zone_level} children')
+
+		self.db.cursor.execute('''
+			INSERT INTO zone_parents(parent_level,parent,child_level,child,share)
+							(
+SELECT gdp.zone_level,gdp.zone_id,gdc.zone_level,gdc.zone_id,ST_Area(ST_Intersection(gdc.geom,gdp.geom),false)/ST_Area(gdc.geom,false) AS share FROM zone_levels zlp
+INNER JOIN zones zp
+ON zlp.name=%(zone_level)s
+AND zp.LEVEL=zlp.id
+INNER JOIN gis_types gt
+ON gt.name=%(gis_type)s
+INNER JOIN gis_data gdp
+ON gdp.zone_id =zp.id AND gdp.zone_level=zp.level AND gdp.gis_type=gt.id
+INNER JOIN zone_levels zdc
+ON zdc.name='zaehlsprengel'
+INNER JOIN gis_data gdc
+ON gdc.zone_level=zdc.id
+AND gdc.gis_type=gt.id AND ST_Intersects(gdc.geom,gdp.geom)
+							)
+								ON CONFLICT DO NOTHING
+								;''',{'gis_type':self.gis_type,'zone_level':self.zone_level})
 		self.db.connection.commit()

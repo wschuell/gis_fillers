@@ -1,6 +1,6 @@
 from . import Getter
 
-
+import numpy as np
 import psycopg2
 from matplotlib import pyplot as plt
 import shapely
@@ -70,7 +70,7 @@ class PopulationGetter(Getter):
 		}
 
 	def parse_results(self,query_result):
-		return [{'Zone':bez,'ZoneID':zid,'population':int(pop),'geometry':shapely.wkt.loads(geo)} for (zid,zlvl,pop,bez,geo,area) in query_result]
+		return [{'Zone':bez,'ZoneID':zid,'population':0 if np.isnan(pop) else int(pop),'geometry':shapely.wkt.loads(geo)} for (zid,zlvl,pop,bez,geo,area) in query_result]
 
 	def get(self,db,**kwargs):
 		db.cursor.execute(self.query(),self.query_attributes())
@@ -88,5 +88,5 @@ class PopulationDensityGetter(PopulationGetter):
 	columns = ('Zone','ZoneID','population_density','geometry')
 	
 	def parse_results(self,query_result):
-		return [{'Zone':bez,'ZoneID':zid,'population_density':int(pop)/area,'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvlv,pop,bez,geo,area) in query_result]
+		return [{'Zone':bez,'ZoneID':zid,'population_density':0 if np.isnan(pop) else int(pop)/area,'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvlv,pop,bez,geo,area) in query_result]
 

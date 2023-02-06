@@ -42,18 +42,11 @@ class Database(TemplateDatabase):
 	The object uses a specific data folder and a list of files used for the fillers, with name, keyword, and potential download link. (move to filler class?)
 	"""
 
-	def clean_db(self,gis_data_stay=False,commit=True,**kwargs):
-		TemplateDatabase.clean_db(self,commit=False,**kwargs)
-		self.cursor.execute('DROP TABLE IF EXISTS plz_gemeinde CASCADE;')
-		self.cursor.execute('DROP TABLE IF EXISTS data_sources CASCADE;')
-		if not gis_data_stay:
-			self.logger.info('Cleaning GIS info')
-			self.cursor.execute('DROP TABLE IF EXISTS zones CASCADE;')
-			self.cursor.execute('DROP TABLE IF EXISTS zone_parents CASCADE;')
-			self.cursor.execute('DROP TABLE IF EXISTS zone_levels CASCADE;')
-			self.cursor.execute('DROP TABLE IF EXISTS gis_data CASCADE;')
-			self.cursor.execute('DROP TABLE IF EXISTS gis_types CASCADE;')
-		self.cursor.execute('DROP TABLE IF EXISTS zone_attribute_types CASCADE;')
-		self.cursor.execute('DROP TABLE IF EXISTS zone_attributes CASCADE;')
-		if commit:
-			self.connection.commit()
+	def clean_db(self,gis_data_stay=False,commit=True,extra_whitelist=[],**kwargs):
+		if gis_data_stay:
+			extra_whitelist += ['zones',
+								'zone_parents',
+								'zone_levels',
+								'gis_data',
+								'gis_types']
+		TemplateDatabase.clean_db(self,commit=commit,extra_whitelist=extra_whitelist,**kwargs)

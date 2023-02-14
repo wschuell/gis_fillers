@@ -16,13 +16,11 @@ class ZaehlsprengelFiller(fillers.Filler):
 	This class fills in geographical data for Austria, with structure:
 	zaehlsprengel < gemeinde < bezirk < bundesland
 	Source is from STAT austria, in three files:
-	GIS info: http://data.statistik.gv.at/data/OGDEXT_ZSP_1_STATISTIK_AUSTRIA_20190101.zip
-	population info: https://www.statistik.at/wcm/idc/idcplg?IdcService=GET_NATIVE_FILE&RevisionSelectionMethod=LatestReleased&dDocName=103418
+	GIS info: http://data.statistik.gv.at/data/OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101.zip
+	population info: https://statistik.at/fileadmin/pages/405/Bevoelkerung_am_1.1.{YEAR}_nach_Zaehlsprengel__Gebietsstand_1.1.{YEAR}_.ods
 	bezirk names: http://www.statistik.at/verzeichnis/reglisten/polbezirke.csv
 
 	Be attentive to the issue year of the different sources, they need to match (typically GIS info is ahead one year if you take the latest).
-	For the population info, direct download is not implemented, as some complex JS code is involved on the server side, and on top of that, it is an xlsx file.
-	Download it, and save it as csv.
 
 	The simplified attribute is used to tell the filler to preprocess the shapefile and simplify the edges with mapshaper
 	"""
@@ -33,8 +31,6 @@ class ZaehlsprengelFiller(fillers.Filler):
 					gis_info_fullname="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101/STATISTIK_AUSTRIA_ZSP_{YEAR}0101.shp",
 					geojson_gis_info_name="STATISTIK_AUSTRIA_ZSP_{YEAR}0101.geojson",
 					pop_info="https://statistik.at/fileadmin/pages/405/Bevoelkerung_am_1.1.{YEAR}_nach_Zaehlsprengel__Gebietsstand_1.1.{YEAR}_.ods",
-					### CAUTION!: the file available on the above link is the last year available. If not matching the other files years,
-					### leads to mismatches as Zaehlsprengel are redefined each year with minor modification
 					# pop_info_name='einwohnerzahl_nach_zaehlsprengel_1.1.2020_gebietsstand_1.1.2020',
 					bezirk_info='https://www.statistik.at/verzeichnis/reglisten/polbezirke.csv',
 					bezirk_info_name='polbezirke.csv',

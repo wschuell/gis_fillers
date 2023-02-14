@@ -27,7 +27,7 @@ class HexagonsFiller(fillers.Filler):
 			truncate_shapes=True,
 			**kwargs):
 		fillers.Filler.__init__(self,**kwargs)
-		self.res = str(9)
+		self.res = res
 		self.buffer = buffer
 		self.buffer_meters = h3.edge_length(self.res,unit='m')*2.
 		self.truncate_shapes = truncate_shapes

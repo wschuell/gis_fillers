@@ -12,7 +12,7 @@ class PopulationGetter(Getter):
 	'''
 	Returns a geopandas dataframe with population per defined area level
 	'''
-	columns = ('Zone','ZoneID','population','geometry')
+	columns = ('Zone','ZoneID','population','geometry','area')
 	def __init__(self,zone_level='bezirk',zone_attribute='population',simplified=True,**kwargs):
 		Getter.__init__(self,**kwargs)
 		self.zone_level = zone_level
@@ -70,7 +70,7 @@ class PopulationGetter(Getter):
 		}
 
 	def parse_results(self,query_result):
-		return [{'Zone':bez,'ZoneID':zid,'population':0 if np.isnan(pop) else int(pop),'geometry':shapely.wkt.loads(geo)} for (zid,zlvl,pop,bez,geo,area) in query_result]
+		return [{'Zone':bez,'ZoneID':zid,'population':0 if np.isnan(pop) else int(pop),'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvl,pop,bez,geo,area) in query_result]
 
 	def get(self,db,**kwargs):
 		db.cursor.execute(self.query(),self.query_attributes())
@@ -85,7 +85,7 @@ class PopulationDensityGetter(PopulationGetter):
 	Returns a geopandas dataframe with population density in people/km2 per defined area level
 	'''
 
-	columns = ('Zone','ZoneID','population_density','geometry')
+	columns = ('Zone','ZoneID','population_density','geometry','area')
 	
 	def parse_results(self,query_result):
 		return [{'Zone':bez,'ZoneID':zid,'population_density':0 if np.isnan(pop) else int(pop)/area,'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvlv,pop,bez,geo,area) in query_result]

@@ -34,7 +34,7 @@ class PopulationGetter(Getter):
 					INNER JOIN gis_types gt
 					ON gd.gis_type =gt.id AND gt."name" =%(target_gt)s) AS q1
 			INNER JOIN
-				(SELECT z.id,z.level,z.name,SUM(za.int_value::real*COALESCE(zp.share,1.)) AS population
+				(SELECT z.id,z.level,z.name,SUM(za.int_value::double precision*(COALESCE(zp.share,1.)::double precision)) AS population
 				FROM zones z
 				INNER JOIN zone_levels zl
 				ON zl.name=%(zone_level)s AND zl.id=z."level"

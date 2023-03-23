@@ -38,7 +38,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 					include_population=True,
 					force=False,
 					remove_bz_900=True,
-					year=2022,
+					year=2023,
 					**kwargs):
 		self.force = force
 		self.year = year

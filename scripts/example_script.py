@@ -55,11 +55,11 @@ plt.show()
 ## Extra: using hexagons H3 <ref_zone_level>_<ref_zone_code_or_id>_hexagons_<resolution(higher=more precise,0 to 15)>
 # needs to be filled beforehand, see filldb script
 
-zone_level = 'zaehlbezirk'
-gdf = zone_getters.PopulationGetter(db=db,zone_level=zone_level,simplified=False).get_result() # gets a geopandas dataframe with various info -- super fast because SQL query behind
+zone_level = 'zaehlsprengel'
+gdf = zone_getters.PopulationDensityGetter(db=db,zone_level=zone_level,simplified=True).get_result() # gets a geopandas dataframe with various info -- super fast because SQL query behind
 
 print(gdf)
-gdf.plot(column='population', legend=True)
+gdf.plot(column='population_density', legend=True)
 plt.title('Population at {} level'.format(zone_level))
 plt.show()
 

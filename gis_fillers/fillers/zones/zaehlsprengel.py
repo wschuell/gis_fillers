@@ -30,7 +30,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 					gis_info_name="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101",
 					gis_info_fullname="OGDEXT_ZSP_1_STATISTIK_AUSTRIA_{YEAR}0101/STATISTIK_AUSTRIA_ZSP_{YEAR}0101.shp",
 					geojson_gis_info_name="STATISTIK_AUSTRIA_ZSP_{YEAR}0101.geojson",
-					pop_info="https://statistik.at/fileadmin/pages/405/Bevoelkerung_am_1.1.{YEAR}_nach_Zaehlsprengel__Gebietsstand_1.1.{YEAR}_.ods",
+					pop_info="https://statistik.at/fileadmin/pages/405/Bevoelkerung_am_01.01.{YEAR}_nach_Zaehlsprengel__Gebietsstand_01.01.{YEAR}_.ods",
 					# pop_info_name='einwohnerzahl_nach_zaehlsprengel_1.1.2020_gebietsstand_1.1.2020',
 					bezirk_info='https://www.statistik.at/verzeichnis/reglisten/polbezirke.csv',
 					bezirk_info_name='polbezirke.csv',

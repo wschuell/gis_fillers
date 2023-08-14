@@ -36,19 +36,19 @@ def maindb():
 	db.connection.close()
 
 
-# def test_countries(maindb):
-# 	maindb.add_filler(zones.countries.CountriesFiller())
-# 	maindb.fill_db()
+def test_countries(maindb):
+	maindb.add_filler(zones.countries.CountriesFiller())
+	maindb.fill_db()
 
 
-# def test_zs(maindb):
-# 	maindb.add_filler(zones.zaehlsprengel.ZaehlsprengelFiller())
-# 	maindb.fill_db()
+def test_zs(maindb):
+	maindb.add_filler(zones.zaehlsprengel.ZaehlsprengelFiller())
+	maindb.fill_db()
 
 
-# def test_plz(maindb):
-# 	maindb.add_filler(zones.zaehlsprengel.PLZFiller())
-# 	maindb.fill_db()
+def test_plz(maindb):
+	maindb.add_filler(zones.zaehlsprengel.PLZFiller())
+	maindb.fill_db()
 
 
 

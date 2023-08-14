@@ -245,7 +245,19 @@ class ZaehlsprengelFiller(fillers.Filler):
 			self.record_file(filename=filename,filecode='zaehlsprengel_geojson')
 			with open(os.path.join(self.data_folder,filename),'r') as f:
 				zs_geo = json.load(f)
-			extras.execute_batch(self.db.cursor,'''INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type) VALUES (%s,(SELECT id FROM zone_levels WHERE name=%s),ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),ST_SetSRID(ST_Centroid(ST_GeomFromGeoJSON(%s)),4326),(SELECT id FROM gis_types WHERE name=%s)) ON CONFLICT DO NOTHING;''',((int(gj['properties']['id']),'zaehlsprengel',str(gj['geometry']),str(gj['geometry']),gis_type) for gj in zs_geo['features']))
+			extras.execute_batch(self.db.cursor,'''
+				INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type) 
+						VALUES (%s,
+								(SELECT id FROM zone_levels WHERE name=%s),
+								ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),
+								ST_SetSRID(ST_Centroid(ST_GeomFromGeoJSON(%s)),4326),
+								(SELECT id FROM gis_types WHERE name=%s))
+								ON CONFLICT DO NOTHING
+								;''',((int(gj['properties'][('id' if 'id' in gj['properties'].keys() else 'g_id')]),
+										'zaehlsprengel',
+										str(gj['geometry']),
+										str(gj['geometry']),
+										gis_type) for gj in zs_geo['features']))
 		elif filetype == 'shapefile':
 			if filename is None:
 				filename = self.gis_info_fullname

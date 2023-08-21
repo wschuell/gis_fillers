@@ -7,6 +7,9 @@ from psycopg2 import extras
 import shapefile
 import json
 import subprocess
+import topojson as tp
+import geopandas as gpd
+
 from .. import fillers
 
 
@@ -22,7 +25,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 
 	Be attentive to the issue year of the different sources, they need to match (typically GIS info is ahead one year if you take the latest).
 
-	The simplified attribute is used to tell the filler to preprocess the shapefile and simplify the edges with mapshaper
+	The simplified attribute is used to tell the filler to preprocess the shapefile and simplify the edges with mapshaper/topojson
 	"""
 
 	def __init__(self,
@@ -40,6 +43,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 					force=False,
 					remove_bz_900=True,
 					year=2023,
+					simplify_engine='topojson',
 					**kwargs):
 		self.force = force
 		self.year = year
@@ -56,10 +60,12 @@ class ZaehlsprengelFiller(fillers.Filler):
 		self.include_population = include_population
 		if self.simplified:
 			self.gis_type = 'zaehlsprengel_simplified'
-			try:
-				subprocess.check_output('mapshaper --version'.split(' '))
-			except FileNotFoundError:
-				raise FileNotFoundError('Mapshaper is not installed, please install for node.js with: npm install -g mapshaper')
+			self.simplify_engine = simplify_engine
+			if self.simplify_engine == 'mapshaper':
+				try:
+					subprocess.check_output('mapshaper --version'.split(' '))
+				except FileNotFoundError:
+					raise FileNotFoundError('Mapshaper is not installed, please install for node.js with: npm install -g mapshaper')
 		else:
 			self.gis_type = 'zaehlsprengel'
 		fillers.Filler.__init__(self,name=self.gis_type,**kwargs)
@@ -191,7 +197,30 @@ class ZaehlsprengelFiller(fillers.Filler):
 			;''')
 		self.db.connection.commit()
 
-	def simplify_shapefile(self,input_path=None,output_path=None,method='visvalingam',percentage=0.2,interval=None,weight=0.5):
+	def simplify_shapefile(self,**kwargs):
+		if self.simplify_engine == 'mapshaper':
+			self.simplify_shapefile_mapshaper(**kwargs)
+		elif self.simplify_engine == 'topojson':
+			self.simplify_shapefile_topojson(**kwargs)
+		else:
+			raise NotImplementedError(f'Simplifying engine should be mapshaper or topojson. Not implemented: {self.simplify_engine}')
+
+	def simplify_shapefile_topojson(self,input_path=None,output_path=None,simplify_param=10):
+
+		if input_path is None:
+			input_path = os.path.join(self.data_folder,self.gis_info_fullname)
+		if output_path is None:
+			output_path = os.path.join(self.data_folder,self.geojson_gis_info_name)
+		gdf = gpd.read_file(input_path).to_crs(4326)
+		topo = tp.Topology(gdf)
+		del gdf
+		topo.toposimplify(simplify_param).to_geojson(fp=output_path)
+		del topo
+		# with open(output_path,'w') as f:
+		# 	f.write(output)
+		# del output
+
+	def simplify_shapefile_mapshaper(self,input_path=None,output_path=None,method='visvalingam',percentage=0.2,interval=None,weight=0.5):
 		'''
 		Simplifying the shapefile
 		Parameter choice is not really implemented in this class; in this case the name of the gis_type attribute used in the database should integrate them to avoid confusion
@@ -205,7 +234,7 @@ class ZaehlsprengelFiller(fillers.Filler):
 		elif method == 'visvalingam':
 			options = 'visvalingam'
 		else:
-			raise ValueError('method should be dp or visvalingam, not '+str(method))
+			raise NotImplementedError('method should be dp or visvalingam, not '+str(method))
 		if weight is not None:
 			options += ' weighted weighting={}'.format(weight)
 		if percentage is not None:
@@ -249,8 +278,8 @@ class ZaehlsprengelFiller(fillers.Filler):
 				INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type) 
 						VALUES (%s,
 								(SELECT id FROM zone_levels WHERE name=%s),
-								ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),
-								ST_SetSRID(ST_Centroid(ST_GeomFromGeoJSON(%s)),4326),
+								ST_SetSRID(ST_MakeValid(ST_GeomFromGeoJSON(%s)),4326),
+								ST_SetSRID(ST_Centroid(ST_MakeValid(ST_GeomFromGeoJSON(%s))),4326),
 								(SELECT id FROM gis_types WHERE name=%s))
 								ON CONFLICT DO NOTHING
 								;''',((int(gj['properties'][('id' if 'id' in gj['properties'].keys() else 'g_id')]),

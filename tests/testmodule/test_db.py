@@ -102,6 +102,7 @@ def test_hexagons_bezirk(maindb,res_bezirk,bezirk):
 	maindb.add_filler(zones.hexagons.HexagonsFiller(res=res_bezirk,target_zone=bezirk,target_zone_level='bezirk'))
 	maindb.fill_db()
 
-# def test_getters(maindb):
-# 	zone_getters.PopulationGetter(db=maindb,zone_level='bezirk',simplified=False).get_result()
-# 	zone_getters.PopulationDensityGetter(db=maindb,zone_level='bezirk',simplified=False).get_result()
+
+def test_getters(maindb):
+	zone_getters.PopulationGetter(db=maindb,zone_level='bezirk',simplified=False).get_result()
+	zone_getters.PopulationDensityGetter(db=maindb,zone_level='bezirk',simplified=False).get_result()

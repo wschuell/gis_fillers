@@ -93,9 +93,9 @@ class ZaehlsprengelFiller(fillers.Filler):
 			#GIS info
 			if not os.path.exists(os.path.join(data_folder,self.gis_info_name)):
 				if not os.path.exists(os.path.join(data_folder,self.gis_info_name+'.zip')):
-					self.download(url=self.gis_info,destination=os.path.join(data_folder,self.gis_info_name+'.zip'))
+					self.download(url=self.gis_info,destination=self.gis_info_name+'.zip')
 				self.logger.info('Unzipping {}'.format(self.gis_info_name+'.zip'))
-				self.unzip(orig_file=os.path.join(data_folder,self.gis_info_name+'.zip'),destination=os.path.join(data_folder,self.gis_info_name))
+				self.unzip(orig_file=self.gis_info_name+'.zip',destination=self.gis_info_name)
 
 			#Simplifying shapefile into geojson
 			if self.simplified and not os.path.exists(os.path.join(self.data_folder,self.geojson_gis_info_name)):
@@ -104,16 +104,16 @@ class ZaehlsprengelFiller(fillers.Filler):
 
 			#bezirk info
 			if not os.path.exists(os.path.join(data_folder,self.bezirk_info_name)):
-				self.download(url=self.bezirk_info,destination=os.path.join(data_folder,self.bezirk_info_name))
+				self.download(url=self.bezirk_info,destination=self.bezirk_info_name)
 
 			#pop_info
 			file_ext = self.pop_info.split('.')[-1]
 			if not os.path.exists(os.path.join(data_folder,self.pop_info_name+'.csv')):
 				if not os.path.exists(os.path.join(data_folder,self.pop_info_name+'.'+file_ext)):
 					self.logger.info('Downloading {}'.format(self.pop_info))
-					self.download(url=self.pop_info,destination=os.path.join(data_folder,self.pop_info_name)+'.'+file_ext,wget=True)
+					self.download(url=self.pop_info,destination=self.pop_info_name+'.'+file_ext,wget=True)
 					# raise NotImplementedError('Complex JS query pattern, please download manually')
-				self.convert_spreadsheet(orig_file=os.path.join(data_folder,self.pop_info_name+'.'+file_ext),destination=os.path.join(data_folder,self.pop_info_name+'.csv'))
+				self.convert_spreadsheet(orig_file=self.pop_info_name+'.'+file_ext,destination=self.pop_info_name+'.csv')
 
 	def apply(self):
 		#filling zones info at different levels

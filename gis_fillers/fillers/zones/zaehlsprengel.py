@@ -152,6 +152,10 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
+			try:
+				int(ans[0][3])
+			except ValueError:
+				ans = ans[1:]
 			ans = self.clean_reader(ans) # two last lines are just empty/info
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zones(id,name,level) VALUES(%s,%s,(SELECT id FROM zone_levels WHERE name='zaehlsprengel')) ON CONFLICT DO NOTHING;''',((int(r[3]),r[4]) for r in ans))
 		self.db.connection.commit()
@@ -167,6 +171,10 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
+			try:
+				int(ans[0][3])
+			except ValueError:
+				ans = ans[1:]
 			
 			ans = self.clean_reader(ans) # two last lines are just empty/info
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zone_attributes(zone,zone_level,attribute,int_value)--,scenario)
@@ -307,6 +315,10 @@ class ZaehlsprengelFiller(fillers.Filler):
 			reader = csv.reader(f)
 			next(reader) #remove header
 			ans = [r for r in reader]
+			try:
+				int(ans[0][3])
+			except ValueError:
+				ans = ans[1:]
 			ans = self.clean_reader(ans)
 			
 		extras.execute_batch(self.db.cursor,'''INSERT INTO zones(id,name,level) VALUES(%s,%s,(SELECT id FROM zone_levels WHERE name='gemeinde')) ON CONFLICT DO NOTHING;''',((int(r[1]),r[2]) for r in ans))
@@ -623,7 +635,7 @@ class PLZFiller(fillers.Filler):
 		else:
 			if not os.path.exists(os.path.join(data_folder,self.file_info_name)):
 				if not os.path.exists(os.path.join(data_folder,self.file_info_name)):
-					self.download(url=self.file_info,destination=os.path.join(data_folder,self.file_info_name))
+					self.download(url=self.file_info,destination=self.file_info_name)
 
 	def apply(self):
 		self.fill_plz()

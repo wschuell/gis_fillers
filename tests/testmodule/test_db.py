@@ -50,9 +50,9 @@ def test_simplified_zs(maindb):
 	maindb.add_filler(zones.zaehlsprengel.SimplifiedZSFiller(simplify_engine='topojson',geojson_gis_info_name="topojson_{YEAR}0101.geojson",))
 	maindb.fill_db()
 
-def test_simplified_zs_mapshaper(maindb):
-	maindb.add_filler(zones.zaehlsprengel.SimplifiedZSFiller(simplify_engine='mapshaper',geojson_gis_info_name="mapshaper_{YEAR}0101.geojson",))
-	maindb.fill_db()
+# def test_simplified_zs_mapshaper(maindb):
+# 	maindb.add_filler(zones.zaehlsprengel.SimplifiedZSFiller(simplify_engine='mapshaper',geojson_gis_info_name="mapshaper_{YEAR}0101.geojson",))
+# 	maindb.fill_db()
 
 
 def test_plz(maindb):

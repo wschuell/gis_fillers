@@ -65,9 +65,11 @@ class CountriesFiller(fillers.Filler):
 			#GIS info
 			if not os.path.exists(os.path.join(data_folder,self.gis_info_name)):
 				if not os.path.exists(os.path.join(data_folder,self.gis_info_name+'.zip')):
-					self.download(url=self.gis_info,destination=os.path.join(data_folder,self.gis_info_name+'.zip'))
+					self.download(url=self.gis_info,destination=self.gis_info_name+'.zip')
+					# self.download(url=self.gis_info,destination=os.path.join(data_folder,self.gis_info_name+'.zip'))
 				self.logger.info('Unzipping {}'.format(self.gis_info_name+'.zip'))
-				self.unzip(orig_file=os.path.join(data_folder,self.gis_info_name+'.zip'),destination=os.path.join(data_folder,self.gis_info_name))
+				self.unzip(orig_file=self.gis_info_name+'.zip',destination=self.gis_info_name)
+				# self.unzip(orig_file=os.path.join(data_folder,self.gis_info_name+'.zip'),destination=os.path.join(data_folder,self.gis_info_name))
 
 	def apply(self):
 		#filling zones info at different levels

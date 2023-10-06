@@ -7,7 +7,7 @@ geopandas
 shapely
 scipy
 matplotlib
-camelot-py[cv]
+# camelot-py[cv]
 odfpy
 db_fillers
 h3

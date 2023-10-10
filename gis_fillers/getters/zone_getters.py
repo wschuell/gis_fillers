@@ -8,22 +8,31 @@ import time
 import geopandas as gpd
 import pandas as pd
 
-class PopulationGetter(Getter):
-	'''
-	Returns a geopandas dataframe with population per defined area level
-	'''
-	columns = ('Zone','ZoneID','population','geometry','area')
-	def __init__(self,zone_level='bezirk',zone_attribute='population',simplified=True,**kwargs):
-		Getter.__init__(self,**kwargs)
-		self.zone_level = zone_level
-		self.zone_attribute = zone_attribute
-		if simplified:
-			self.target_gt = 'zaehlsprengel_simplified'
-		else:
-			self.target_gt = 'zaehlsprengel'
 
-	def query(self):
-		return '''
+class PopulationGetter(Getter):
+    """
+    Returns a geopandas dataframe with population per defined area level
+    """
+
+    columns = ("Zone", "ZoneID", "population", "geometry", "area")
+
+    def __init__(
+        self,
+        zone_level="bezirk",
+        zone_attribute="population",
+        simplified=True,
+        **kwargs
+    ):
+        Getter.__init__(self, **kwargs)
+        self.zone_level = zone_level
+        self.zone_attribute = zone_attribute
+        if simplified:
+            self.target_gt = "zaehlsprengel_simplified"
+        else:
+            self.target_gt = "zaehlsprengel"
+
+    def query(self):
+        return """
 			SELECT q1.id,q1.level,q2.population,q1.name,q1.geometry, q1.area FROM
 				(SELECT z.id,z.level,z.name, ST_AsText(gd.geom) AS geometry, ST_Area(gd.geom,false)/10^6 AS area
 					FROM zones z
@@ -59,34 +68,53 @@ class PopulationGetter(Getter):
 				GROUP BY z.id,z.level,z.name
 				) AS q2
 			ON q1.id=q2.id AND q1.level=q2.level
-		;'''
+		;"""
 
+    def query_attributes(self):
+        return {
+            "zone_level": self.zone_level,
+            "zone_attribute": self.zone_attribute,
+            "target_gt": self.target_gt,
+        }
 
-	def query_attributes(self):
-		return {
-		'zone_level':self.zone_level,
-		'zone_attribute':self.zone_attribute,
-		'target_gt':self.target_gt
-		}
+    def parse_results(self, query_result):
+        return [
+            {
+                "Zone": bez,
+                "ZoneID": zid,
+                "population": 0 if np.isnan(pop) else int(pop),
+                "geometry": shapely.wkt.loads(geo),
+                "area": area,
+            }
+            for (zid, zlvl, pop, bez, geo, area) in query_result
+        ]
 
-	def parse_results(self,query_result):
-		return [{'Zone':bez,'ZoneID':zid,'population':0 if np.isnan(pop) else int(pop),'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvl,pop,bez,geo,area) in query_result]
-
-	def get(self,db,**kwargs):
-		db.cursor.execute(self.query(),self.query_attributes())
-		query_result = list(db.cursor.fetchall())
-		gdf = gpd.GeoDataFrame(self.parse_results(query_result=query_result),crs='epsg:4326',columns=self.columns)
-		return gdf
-
+    def get(self, db, **kwargs):
+        db.cursor.execute(self.query(), self.query_attributes())
+        query_result = list(db.cursor.fetchall())
+        gdf = gpd.GeoDataFrame(
+            self.parse_results(query_result=query_result),
+            crs="epsg:4326",
+            columns=self.columns,
+        )
+        return gdf
 
 
 class PopulationDensityGetter(PopulationGetter):
-	'''
-	Returns a geopandas dataframe with population density in people/km2 per defined area level
-	'''
+    """
+    Returns a geopandas dataframe with population density in people/km2 per defined area level
+    """
 
-	columns = ('Zone','ZoneID','population_density','geometry','area')
-	
-	def parse_results(self,query_result):
-		return [{'Zone':bez,'ZoneID':zid,'population_density':0 if np.isnan(pop) else int(pop)/area,'geometry':shapely.wkt.loads(geo),'area':area} for (zid,zlvlv,pop,bez,geo,area) in query_result]
+    columns = ("Zone", "ZoneID", "population_density", "geometry", "area")
 
+    def parse_results(self, query_result):
+        return [
+            {
+                "Zone": bez,
+                "ZoneID": zid,
+                "population_density": 0 if np.isnan(pop) else int(pop) / area,
+                "geometry": shapely.wkt.loads(geo),
+                "area": area,
+            }
+            for (zid, zlvlv, pop, bez, geo, area) in query_result
+        ]

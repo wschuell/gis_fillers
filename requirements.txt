@@ -11,4 +11,4 @@ matplotlib
 odfpy
 db_fillers
 h3
-topojson=1.6
+topojson>=1.6

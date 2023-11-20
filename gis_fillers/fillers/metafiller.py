@@ -1,4 +1,4 @@
-from .fillers import Fillers
+from .fillers import Filler
 from .zones import zaehlsprengel, countries, geonames
 
 

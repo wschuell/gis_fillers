@@ -11,6 +11,6 @@ matplotlib
 odfpy
 db_fillers
 h3<4.0
-topojson
 geopy
 contextily
+topojson>=1.6

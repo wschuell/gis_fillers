@@ -1,1 +1,1 @@
-from .generic_getters import Getter
+from .generic_getters import Getter, GISGetter

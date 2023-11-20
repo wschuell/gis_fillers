@@ -1,4 +1,4 @@
-from . import Getter
+from . import Getter, GISGetter
 
 import numpy as np
 import psycopg2
@@ -9,7 +9,7 @@ import geopandas as gpd
 import pandas as pd
 
 
-class PopulationGetter(Getter):
+class PopulationGetter(GISGetter):
     """
     Returns a geopandas dataframe with population per defined area level
     """
@@ -23,7 +23,7 @@ class PopulationGetter(Getter):
         simplified=True,
         **kwargs
     ):
-        Getter.__init__(self, **kwargs)
+        GISGetter.__init__(self, **kwargs)
         self.zone_level = zone_level
         self.zone_attribute = zone_attribute
         if simplified:
@@ -33,42 +33,42 @@ class PopulationGetter(Getter):
 
     def query(self):
         return """
-			SELECT q1.id,q1.level,q2.population,q1.name,q1.geometry, q1.area FROM
-				(SELECT z.id,z.level,z.name, ST_AsText(gd.geom) AS geometry, ST_Area(gd.geom,false)/10^6 AS area
-					FROM zones z
-					INNER JOIN zone_levels zl
-					ON zl.name=%(zone_level)s AND zl.id=z."level"
-					INNER JOIN gis_data gd
-					ON gd.zone_id =z.id AND gd.zone_level =z."level"
-					INNER JOIN gis_types gt
-					ON gd.gis_type =gt.id AND gt."name" =%(target_gt)s) AS q1
-			INNER JOIN
-				(SELECT z.id,z.level,z.name,SUM(za.int_value::double precision*(COALESCE(zp.share,1.)::double precision)) AS population
-				FROM zones z
-				INNER JOIN zone_levels zl
-				ON zl.name=%(zone_level)s AND zl.id=z."level"
-				INNER JOIN zone_parents zp
-				ON zp.parent=z.id AND zp.parent_level=z.level
-				INNER JOIN zone_levels zl2
-				ON zl2.id = zp.child_level AND zl2.name='zaehlsprengel'
-				INNER JOIN zone_attributes za
-				ON za.zone=zp.child AND za.zone_level=zp.child_level
-				INNER JOIN zone_attribute_types zat
-				ON zat.id=za.attribute AND zat.name='zs_population'
-				GROUP BY z.id,z.level,z.name
-					UNION
-				SELECT z.id,z.level,z.name,SUM(za.int_value::real) AS population
-				FROM zones z
-				INNER JOIN zone_levels zl
-				ON zl.name=%(zone_level)s AND zl.id=z."level" AND 'zaehlsprengel'=%(zone_level)s
-				INNER JOIN zone_attributes za
-				ON za.zone=z.id AND za.zone_level=zl.id
-				INNER JOIN zone_attribute_types zat
-				ON zat.id=za.attribute AND zat.name='zs_population'
-				GROUP BY z.id,z.level,z.name
-				) AS q2
-			ON q1.id=q2.id AND q1.level=q2.level
-		;"""
+            SELECT q1.id,q1.level,q2.population,q1.name,q1.geometry, q1.area FROM
+                (SELECT z.id,z.level,z.name, ST_AsText(gd.geom) AS geometry, ST_Area(gd.geom,false)/10^6 AS area
+                    FROM zones z
+                    INNER JOIN zone_levels zl
+                    ON zl.name=%(zone_level)s AND zl.id=z."level"
+                    INNER JOIN gis_data gd
+                    ON gd.zone_id =z.id AND gd.zone_level =z."level"
+                    INNER JOIN gis_types gt
+                    ON gd.gis_type =gt.id AND gt."name" =%(target_gt)s) AS q1
+            INNER JOIN
+                (SELECT z.id,z.level,z.name,SUM(za.int_value::double precision*(COALESCE(zp.share,1.)::double precision)) AS population
+                FROM zones z
+                INNER JOIN zone_levels zl
+                ON zl.name=%(zone_level)s AND zl.id=z."level"
+                INNER JOIN zone_parents zp
+                ON zp.parent=z.id AND zp.parent_level=z.level
+                INNER JOIN zone_levels zl2
+                ON zl2.id = zp.child_level AND zl2.name='zaehlsprengel'
+                INNER JOIN zone_attributes za
+                ON za.zone=zp.child AND za.zone_level=zp.child_level
+                INNER JOIN zone_attribute_types zat
+                ON zat.id=za.attribute AND zat.name='zs_population'
+                GROUP BY z.id,z.level,z.name
+                    UNION
+                SELECT z.id,z.level,z.name,SUM(za.int_value::real) AS population
+                FROM zones z
+                INNER JOIN zone_levels zl
+                ON zl.name=%(zone_level)s AND zl.id=z."level" AND 'zaehlsprengel'=%(zone_level)s
+                INNER JOIN zone_attributes za
+                ON za.zone=z.id AND za.zone_level=zl.id
+                INNER JOIN zone_attribute_types zat
+                ON zat.id=za.attribute AND zat.name='zs_population'
+                GROUP BY z.id,z.level,z.name
+                ) AS q2
+            ON q1.id=q2.id AND q1.level=q2.level
+        ;"""
 
     def query_attributes(self):
         return {
@@ -88,16 +88,6 @@ class PopulationGetter(Getter):
             }
             for (zid, zlvl, pop, bez, geo, area) in query_result
         ]
-
-    def get(self, db, **kwargs):
-        db.cursor.execute(self.query(), self.query_attributes())
-        query_result = list(db.cursor.fetchall())
-        gdf = gpd.GeoDataFrame(
-            self.parse_results(query_result=query_result),
-            crs="epsg:4326",
-            columns=self.columns,
-        )
-        return gdf
 
 
 class PopulationDensityGetter(PopulationGetter):

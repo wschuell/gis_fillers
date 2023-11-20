@@ -10,5 +10,7 @@ matplotlib
 # camelot-py[cv]
 odfpy
 db_fillers
-h3
+h3<4.0
 topojson
+geopy
+contextily

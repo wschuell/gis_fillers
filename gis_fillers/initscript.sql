@@ -118,6 +118,22 @@ CREATE INDEX IF NOT EXISTS zone_name_idx ON zones(name,level,id);
 --CREATE INDEX IF NOT EXISTS zs_attr_completenodate_idx2 ON zone_attributes(zone_level,zone,attribute,scenario,int_value);
 CREATE INDEX IF NOT EXISTS zs_attr_completenodate_idx2 ON zone_attributes(zone_level,zone,attribute,int_value);
 
+CREATE TABLE IF NOT EXISTS cached_addresses(
+address TEXT PRIMARY KEY,
+geom GEOMETRY(POINT,4326)
+);
+
+CREATE INDEX IF NOT EXISTS ca_gist_idx
+  ON cached_addresses
+  USING GIST (geom);
+
+
+CREATE TABLE IF NOT EXISTS geonames_zipcodes(
+country_code TEXT NOT NULL,
+zip_code TEXT NOT NULL,
+geom GEOMETRY(POINT,4326),
+PRIMARY KEY(country_code,zip_code)
+);
 
 CREATE TABLE IF NOT EXISTS _exec_info(
 id BIGSERIAL PRIMARY KEY,

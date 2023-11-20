@@ -71,6 +71,11 @@ def test_plz(maindb):
     maindb.fill_db()
 
 
+def test_geonames(maindb):
+    maindb.add_filler(zones.geonames.GeonamesFiller())
+    maindb.fill_db()
+
+
 res_list = [
     3,
     4,
@@ -90,13 +95,13 @@ def country(request):
     return request.param
 
 
-# def test_hexagons(maindb, res, country):
-#     maindb.add_filler(
-#         zones.hexagons.HexagonsFiller(
-#             res=res, target_zone=country, target_zone_level="country"
-#         )
-#     )
-#     maindb.fill_db()
+def test_hexagons(maindb, res, country):
+    maindb.add_filler(
+        zones.hexagons.HexagonsFiller(
+            res=res, target_zone=country, target_zone_level="country"
+        )
+    )
+    maindb.fill_db()
 
 
 bezirk_list = [918, 922]
@@ -118,13 +123,13 @@ def res_bezirk(request):
     return request.param
 
 
-# def test_hexagons_bezirk(maindb, res_bezirk, bezirk):
-#     maindb.add_filler(
-#         zones.hexagons.HexagonsFiller(
-#             res=res_bezirk, target_zone=bezirk, target_zone_level="bezirk"
-#         )
-#     )
-#     maindb.fill_db()
+def test_hexagons_bezirk(maindb, res_bezirk, bezirk):
+    maindb.add_filler(
+        zones.hexagons.HexagonsFiller(
+            res=res_bezirk, target_zone=bezirk, target_zone_level="bezirk"
+        )
+    )
+    maindb.fill_db()
 
 
 getters_list = [
@@ -161,6 +166,12 @@ getters_list = [
             location_list=["josefstadter str. 39", "wien", "ortaköy, istanbul"] * 10,
             nominatim_host=None,
             nominatim_user_agent="gis_fillers_test",
+        ),
+    ),
+    (
+        generic_getters.ZipPointsGetter,
+        dict(
+            location_list=[("FR", "33400"), ("AT", "1080")] * 10,
         ),
     ),
 ]

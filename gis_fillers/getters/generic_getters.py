@@ -44,11 +44,15 @@ class LocationPointsGetter(GISGetter):
         if self.add_noise:
             tmp = []
             for index, poi in gdf.iterrows():
-                new_point = translate(
-                    gdf.loc[index, "geometry"],
-                    xoff=random.random() * self.noise_size,
-                    yoff=random.random() * self.noise_size,
-                )
+                geom = gdf.loc[index, "geometry"]
+                if geom is None:
+                    new_point = None
+                else:
+                    new_point = translate(
+                        geom,
+                        xoff=random.random() * self.noise_size,
+                        yoff=random.random() * self.noise_size,
+                    )
                 tmp.append(
                     {
                         "geometry": new_point,

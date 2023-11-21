@@ -227,7 +227,7 @@ class AddressPointsGetter(LocationPointsGetter):
         to_resolve = [a for a in ans if a["geometry"] is None]
         if len(to_resolve):
             self.logger.info(
-                f"Resolving {len(to_resolve)} addresses out of {len(ans)}."
+                f"Resolving {len(set([r['location'] for r in to_resolve]))} addresses out of {len(ans)}."
             )
         temp_resolved = dict()
         for a in to_resolve:

@@ -12,15 +12,18 @@ from shapely.affinity import translate
 class GISGetter(Getter):
     columns = ("geometry",)
 
-    def get(self, db, **kwargs):
+    def get(self, db, raw_data=False, **kwargs):
         db.cursor.execute(self.query(), self.query_attributes())
         query_result = list(db.cursor.fetchall())
-        gdf = gpd.GeoDataFrame(
-            self.parse_results(query_result=query_result),
-            crs="epsg:4326",
-            columns=self.columns,
-        )
-        return gdf
+        if raw_data:
+            return query_result
+        else:
+            gdf = gpd.GeoDataFrame(
+                self.parse_results(query_result=query_result),
+                crs="epsg:4326",
+                columns=self.columns,
+            )
+            return gdf
 
 
 class LocationPointsGetter(GISGetter):
@@ -145,7 +148,8 @@ class AreaPointsGetter(LocationPointsGetter):
         LEFT OUTER JOIN gis_data gd
                 ON gd.gis_type=gt.id
                 AND gd.zone_id=z.id
-                AND gd.zone_level=zl.id)
+                AND gd.zone_level=zl.id
+        ORDER BY tl.id)
         SELECT location,ST_Y(geom) AS geo_lat,ST_X(geom) AS geo_long,geom FROM main_query;
         """
 
@@ -206,6 +210,7 @@ class AddressPointsGetter(LocationPointsGetter):
         FROM temp_locations_{self.rnd_str} tl
         LEFT OUTER JOIN cached_addresses ca
         ON ca.address=tl.location
+        ORDER BY tl.id
         ;
         """
 
@@ -299,6 +304,7 @@ class ZipPointsGetter(LocationPointsGetter):
         LEFT OUTER JOIN geonames_zipcodes gz
         ON gz.country_code=tl.country_code
         AND gz.zip_code=tl.location
+        ORDER BY tl.id
         ;
         """
 

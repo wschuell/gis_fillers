@@ -4,7 +4,7 @@ import glob
 
 import gis_fillers as gf
 from gis_fillers import Database
-from gis_fillers.fillers import zones
+from gis_fillers.fillers import zones, loc_resolver
 from gis_fillers.getters import zone_getters, generic_getters
 
 conninfo = {
@@ -184,3 +184,44 @@ def getter(request):
 
 def test_getters(maindb, getter):
     getter[0](db=maindb, **getter[1]).get_result()
+
+
+def test_loc_solver(maindb):
+    maindb.cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS test_loc_solver(
+            id1 BIGSERIAL,
+            id2 BIGSERIAL,
+            address TEXT,
+            geom GEOMETRY(POINT,4326),
+            PRIMARY KEY(id1,id2)
+            );
+
+        INSERT INTO test_loc_solver(address,geom) VALUES 
+        ('josefstadter str. 39',NULL),
+        ('josefstadter str. 39',NULL),
+        ('josefstadter str. 39',NULL),
+        ('josefstadter str. 39',NULL),
+        ('wien',NULL),
+        ('ortaköy,istanbul',NULL),
+        ('ortaköy,istanbul',NULL),
+        ('üsküdar,istanbul',NULL),
+        ('üsküdar,istanbul',NULL),
+        ('üsküdar,istanbul',NULL)
+        ;
+        """
+    )
+    maindb.add_filler(
+        loc_resolver.LocationResolver(
+            id_col=("id1", "id2"),
+            source_db=maindb,
+            loc_col="address",
+            query_table="test_loc_solver",
+            resolver_args=dict(
+                nominatim_host=None,
+                nominatim_user_agent="gis_fillers_test",
+            ),
+        )
+    )
+    maindb.fill_db()
+    maindb.connection.commit()

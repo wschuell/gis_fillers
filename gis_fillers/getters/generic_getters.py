@@ -50,8 +50,8 @@ class LocationPointsGetter(GISGetter):
                 else:
                     new_point = translate(
                         geom,
-                        xoff=random.random() * self.noise_size,
-                        yoff=random.random() * self.noise_size,
+                        xoff=(random.random() - 0.5) * 2 * self.noise_size,
+                        yoff=(random.random() - 0.5) * 2 * self.noise_size,
                     )
                 tmp.append(
                     {
@@ -60,8 +60,6 @@ class LocationPointsGetter(GISGetter):
                 )
             new_gdf = gpd.GeoDataFrame(tmp, columns=["geometry"])
             gdf["geometry"] = new_gdf["geometry"]
-            # gdf["lat"] = new_gdf["lat"]
-            # gdf["long"] = new_gdf["long"]
             gdf["lat"] = gdf["geometry"].y
             gdf["long"] = gdf["geometry"].x
 

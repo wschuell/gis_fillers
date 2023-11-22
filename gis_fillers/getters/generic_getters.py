@@ -4,6 +4,7 @@ import random
 from psycopg2 import extras
 import shapely
 import geopandas as gpd
+import geopy
 from geopy.geocoders import Nominatim
 from shapely.geometry import Point
 from shapely.affinity import translate
@@ -187,23 +188,49 @@ class AddressPointsGetter(LocationPointsGetter):
         nominatim_host="localhost",
         nominatim_port=8080,
         nominatim_user_agent="gis_fillers",
+        skippable=False,
+        unsafe_nominatim=False,
         **kwargs,
     ):
         self.nominatim_host = nominatim_host
         self.nominatim_port = nominatim_port
+        self.skippable = skippable
+        self.unsafe_nominatim = unsafe_nominatim  # You do not want to run queries to the public Nominatim instance for sensitive data
         self.nominatim_user_agent = nominatim_user_agent
         AreaPointsGetter.__init__(self, **kwargs)
         self.set_geolocator()
 
     def set_geolocator(self):
         if self.nominatim_host is None:
-            self.geolocator = Nominatim(user_agent=self.nominatim_user_agent)
+            if self.unsafe_nominatim:
+                self.geolocator = Nominatim(user_agent=self.nominatim_user_agent)
+            elif self.skippable:
+                self.logger.info("Skipping usage of Nominatim public instance")
+                self.done = True
+            else:
+                raise ValueError(
+                    "Provide a specific Nominatim host. This error prevents you from using the public one by default, as it can expose sensitive data"
+                )
         else:
             self.geolocator = Nominatim(
                 user_agent=self.nominatim_user_agent,
                 domain=f"{self.nominatim_host}:{self.nominatim_port}",
                 scheme="http",
             )
+            if self.skippable and not self.test_geolocator():
+
+                def blank_fn(*args, **kwargs):
+                    return None
+
+                self.geolocator = blank_fn
+
+    def test_geolocator(self):
+        try:
+            self.geolocator.geocode("Vienna")
+            return True
+        except geopy.exc.GeocoderUnavailable:
+            self.logger.info("Geocoder not available, skipping the queries")
+            return False
 
     def transform_location(self):
         if len(self.location_list) and not isinstance(self.location_list[0], str):

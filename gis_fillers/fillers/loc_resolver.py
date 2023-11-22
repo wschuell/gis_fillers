@@ -1,4 +1,4 @@
-from .fillers import Filler
+from db_fillers import Filler
 import copy
 from psycopg2 import extras
 

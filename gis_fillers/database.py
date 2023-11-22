@@ -6,7 +6,7 @@ import logging
 import csv
 import hashlib
 import numpy as np
-
+from . import MetaFiller
 
 from db_fillers import Database as TemplateDatabase
 
@@ -56,3 +56,15 @@ class Database(TemplateDatabase):
         TemplateDatabase.clean_db(
             self, commit=commit, extra_whitelist=extra_whitelist, **kwargs
         )
+
+    def get_gis_db(self, schema="postgis", replace=False, fill_db=True):
+        if not hasattr(self, "gis_db") or replace:
+            conninfo = copy.deepcopy(self.db_conninfo)
+            conninfo["db_schema"] = schema
+            self.gis_db = Database(**conninfo)
+            self.gis_db.init_db()
+            if fill_db:
+                self.gis_db.add_filler(MetaFiller())
+                self.gis_db.fill_db()
+                self.gis_db.connection.commit()
+        return self.gis_db

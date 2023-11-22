@@ -62,6 +62,17 @@ getters_list = [
             location_list=["josefstadter str. 39", "wien", "ortaköy, istanbul"] * 10,
             nominatim_host=None,
             nominatim_user_agent="gis_fillers_test",
+            unsafe_nominatim=True,
+        ),
+    ),
+    (
+        generic_getters.AddressPointsGetter,
+        dict(
+            location_list=["josefstadter str. 39", "wien", "ortaköy, istanbul"] * 10,
+            nominatim_host=None,
+            nominatim_user_agent="gis_fillers_test",
+            unsafe_nominatim=False,
+            skippable=True,
         ),
     ),
     (
@@ -129,6 +140,7 @@ def test_loc_solver(maindb):
             resolver_args=dict(
                 nominatim_host=None,
                 nominatim_user_agent="gis_fillers_test",
+                unsafe_nominatim=True,
             ),
         )
     )

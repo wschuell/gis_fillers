@@ -45,7 +45,7 @@ class LocationResolver(Filler):
 
     def check_sql(self):
         for var in (self.query_table, self.geom_col, *self.loc_columns):
-            pass  # check_sql_safe(var)
+            self.check_sql_safe(var)
 
     def prepare(self):
         self.check_sql()

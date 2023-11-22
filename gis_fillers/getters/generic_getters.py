@@ -41,6 +41,10 @@ class LocationPointsGetter(GISGetter):
         self.rnd_str = "".join(
             random.choice(string.ascii_letters + string.digits) for _ in range(10)
         )
+        self.transform_location()
+
+    def transform_location(self):
+        pass
 
     def get(self, **kwargs):
         gdf = GISGetter.get(self, **kwargs)
@@ -200,6 +204,13 @@ class AddressPointsGetter(LocationPointsGetter):
                 domain=f"{self.nominatim_host}:{self.nominatim_port}",
                 scheme="http",
             )
+
+    def transform_location(self):
+        if len(self.location_list) and not isinstance(self.location_list[0], str):
+            self.location_list = [
+                ", ".join([("" if ll is None else ll) for ll in l])
+                for l in self.location_list
+            ]
 
     def query(self):
         return f"""

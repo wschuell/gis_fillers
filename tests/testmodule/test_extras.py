@@ -86,6 +86,7 @@ getters_list = [
             * 10,
             nominatim_host=None,
             nominatim_user_agent="gis_fillers_test",
+            unsafe_nominatim=True,
         ),
     ),
     (

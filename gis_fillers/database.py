@@ -57,14 +57,16 @@ class Database(TemplateDatabase):
             self, commit=commit, extra_whitelist=extra_whitelist, **kwargs
         )
 
-    def get_gis_db(self, schema="postgis", replace=False, fill_db=True):
+    def get_gis_db(self, schema="postgis", replace=False, fill_db=True, force=False):
         if not hasattr(self, "gis_db") or replace:
             conninfo = copy.deepcopy(self.db_conninfo)
             conninfo["db_schema"] = schema
             self.gis_db = Database(**conninfo)
             self.gis_db.init_db()
             if fill_db:
-                self.gis_db.add_filler(MetaFiller())
-                self.gis_db.fill_db()
-                self.gis_db.connection.commit()
+                self.gis_db.cursor.execute("SELECT 1 FROM geonames_zipcodes LIMIT 1;")
+                if force or not list(self.gis_db.cursor.fetchall()):
+                    self.gis_db.add_filler(MetaFiller())
+                    self.gis_db.fill_db()
+                    self.gis_db.connection.commit()
         return self.gis_db

@@ -17,7 +17,7 @@ class GISGetter(Getter):
         db.cursor.execute(self.query(), self.query_attributes())
         query_result = list(db.cursor.fetchall())
         if raw_data:
-            return query_result
+            return self.parse_results(query_result=query_result)
         else:
             gdf = gpd.GeoDataFrame(
                 self.parse_results(query_result=query_result),
@@ -280,11 +280,14 @@ class AddressPointsGetter(LocationPointsGetter):
             else:
                 geoloc = self.geolocator.geocode(loc)
                 temp_resolved[loc] = geoloc
-            a["geometry"] = shapely.wkt.loads(
-                f"POINT({geoloc.longitude} {geoloc.latitude})"
-            )
-            a["lat"], a["long"] = geoloc.latitude, geoloc.longitude
-            self.fill_cached_address(address=loc, geo_lat=a["lat"], geo_long=a["long"])
+            if geoloc is not None:
+                a["geometry"] = shapely.wkt.loads(
+                    f"POINT({geoloc.longitude} {geoloc.latitude})"
+                )
+                a["lat"], a["long"] = geoloc.latitude, geoloc.longitude
+                self.fill_cached_address(
+                    address=loc, geo_lat=a["lat"], geo_long=a["long"]
+                )
         return ans
 
     def fill_cached_address(self, address, geo_lat, geo_long):

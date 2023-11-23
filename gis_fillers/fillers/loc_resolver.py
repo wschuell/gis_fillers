@@ -65,8 +65,12 @@ class LocationResolver(Filler):
             self.location_list
         ), f"Mismatch between results length{len(results)} and expected length {len(self.location_list)}"
         for res, loc in zip(results, self.location_info):
-            loc["geo_lat"] = res[lat_idx]
-            loc["geo_long"] = res[long_idx]
+            if isinstance(res, tuple):
+                loc["geo_lat"] = res[lat_idx]
+                loc["geo_long"] = res[long_idx]
+            else:
+                loc["geo_lat"] = res["lat"]
+                loc["geo_long"] = res["long"]
             for idval, idc in zip(loc["id_list"], self.id_columns):
                 loc[idc] = idval
 

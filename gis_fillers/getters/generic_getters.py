@@ -223,6 +223,7 @@ class AddressPointsGetter(LocationPointsGetter):
                     return None
 
                 self.geolocator = blank_fn
+                self.geolocator.geocode = blank_fn
 
     def test_geolocator(self):
         try:

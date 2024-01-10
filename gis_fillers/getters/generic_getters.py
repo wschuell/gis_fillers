@@ -8,6 +8,24 @@ import geopy
 from geopy.geocoders import Nominatim
 from shapely.geometry import Point
 from shapely.affinity import translate
+import gettext
+import pycountry
+
+
+def get_countries_info(language=None):
+    """
+    Returns a dict to be able to extract alpha codes from country names, in particular when in another language
+    """
+    if language is None:
+        ans = {c.name: c for c in pycountry.countries}
+    else:
+        lang = gettext.translation(
+            "iso3166-1", pycountry.LOCALES_DIR, languages=[language]
+        )
+        ans = dict()
+        for c in pycountry.countries:
+            ans[lang.gettext(c.name)] = c
+    return ans
 
 
 class GISGetter(Getter):
@@ -309,6 +327,69 @@ class ZipPointsGetter(LocationPointsGetter):
     """
 
     columns = ("location", "country_code", "lat", "long", "geometry")
+
+    def __init__(
+        self, country=None, country_format="alpha_2", country_language=None, **kwargs
+    ):
+        self.country = country
+        self.country_language = country_language
+        self.country_format = country_format
+        LocationPointsGetter.__init__(self, **kwargs)
+
+    def transform_location(self):
+        if self.country is not None:
+            location_list = []
+            for l in self.location_list:
+                if len(l) == 1:
+                    location_list.append((self.country, *l))
+                else:
+                    location_list.append(l)
+            self.location_list = location_list
+        if self.country_format == "alpha_2":
+            self.location_list = [
+                (
+                    (ctry[:2] if isinstance(ctry, str) else ctry),
+                    loc,
+                )
+                for (ctry, loc) in self.location_list
+            ]
+        elif self.country_format == "name":
+            country_dict = get_countries_info(language=self.country_language)
+
+            def a2code(ct):
+                a = country_dict.get(ct, None)
+                if a is None:
+                    return
+                else:
+                    return a.alpha_2
+
+            self.location_list = [
+                (
+                    a2code(ctry),
+                    loc,
+                )
+                for (ctry, loc) in self.location_list
+            ]
+        elif self.country_format == "alpha_3":
+
+            def a2code(ct):
+                a = pycountry.countries.get(alpha_3=ct)
+                if a is None:
+                    return
+                else:
+                    return a.alpha_2
+
+            self.location_list = [
+                (
+                    a2code(ctry),
+                    loc,
+                )
+                for (ctry, loc) in self.location_list
+            ]
+        else:
+            raise ValueError(
+                f"country_format: {self.country_format} unknown. Choose from (alpha_2,alpha_3,name)"
+            )
 
     def prepare(self):
         Getter.prepare(self)

@@ -95,6 +95,28 @@ getters_list = [
             location_list=[("FR", "33400"), ("AT", "1080")] * 10,
         ),
     ),
+    (
+        generic_getters.ZipPointsGetter,
+        dict(
+            location_list=[("France", "33400"), ("Austria", "1080")] * 10,
+            country_format="name",
+        ),
+    ),
+    (
+        generic_getters.ZipPointsGetter,
+        dict(
+            location_list=[("FRA", "33400"), ("AUT", "1080")] * 10,
+            country_format="alpha_3",
+        ),
+    ),
+    (
+        generic_getters.ZipPointsGetter,
+        dict(
+            location_list=[("Frankreich", "33400"), ("Österreich", "1080")] * 10,
+            country_format="name",
+            country_language="de",
+        ),
+    ),
 ]
 
 
@@ -110,6 +132,7 @@ def test_getters(maindb, getter):
 def test_loc_solver(maindb):
     maindb.cursor.execute(
         """
+        DROP TABLE IF EXISTS test_loc_solver;
         CREATE TABLE IF NOT EXISTS test_loc_solver(
             id1 BIGSERIAL,
             id2 BIGSERIAL,
@@ -142,6 +165,123 @@ def test_loc_solver(maindb):
                 nominatim_host=None,
                 nominatim_user_agent="gis_fillers_test",
                 unsafe_nominatim=True,
+            ),
+        )
+    )
+    maindb.fill_db()
+    maindb.connection.commit()
+
+
+ctry_list = [
+    dict(
+        data=[
+            ("AT", "1080"),
+            ("AT", "1080"),
+            ("AT", "1080"),
+            ("AT", "1080"),
+            ("AT", "1080"),
+            ("AT", "1080"),
+            ("FR", "33400"),
+            ("FR", "33400"),
+            ("FR", "33400"),
+            ("FR", "33400"),
+            ("FR", "33400"),
+            ("FR", "99999999"),
+            ("BLAH", "1"),
+        ],
+        lang=None,
+        format="alpha_2",
+    ),
+    dict(
+        data=[
+            ("Österreich", "1080"),
+            ("Österreich", "1080"),
+            ("Österreich", "1080"),
+            ("Österreich", "1080"),
+            ("Österreich", "1080"),
+            ("Österreich", "1080"),
+            ("Frankreich", "33400"),
+            ("Frankreich", "33400"),
+            ("Frankreich", "33400"),
+            ("Frankreich", "33400"),
+            ("Frankreich", "33400"),
+            ("Frankreich", "99999999"),
+            ("BLAH", "1"),
+        ],
+        lang="de",
+        format="name",
+    ),
+    dict(
+        data=[
+            ("Austria", "1080"),
+            ("Austria", "1080"),
+            ("Austria", "1080"),
+            ("Austria", "1080"),
+            ("Austria", "1080"),
+            ("Austria", "1080"),
+            ("France", "33400"),
+            ("France", "33400"),
+            ("France", "33400"),
+            ("France", "33400"),
+            ("France", "33400"),
+            ("France", "99999999"),
+            ("BLAH", "1"),
+        ],
+        lang=None,
+        format="name",
+    ),
+    dict(
+        data=[
+            ("AUT", "1080"),
+            ("AUT", "1080"),
+            ("AUT", "1080"),
+            ("AUT", "1080"),
+            ("AUT", "1080"),
+            ("AUT", "1080"),
+            ("FRA", "33400"),
+            ("FRA", "33400"),
+            ("FRA", "33400"),
+            ("FRA", "33400"),
+            ("FRA", "33400"),
+            ("FRA", "99999999"),
+            ("BLAH", "1"),
+        ],
+        lang=None,
+        format="alpha_3",
+    ),
+]
+
+
+@pytest.fixture(params=ctry_list)
+def country_args(request):
+    return request.param
+
+
+def test_loc_solver_countries(maindb, country_args):
+    maindb.cursor.execute(
+        f"""
+        DROP TABLE IF EXISTS test_loc_solver;
+        CREATE TABLE IF NOT EXISTS test_loc_solver(
+            id BIGSERIAL PRIMARY KEY,
+            plz TEXT,
+            country TEXT,
+            geom GEOMETRY(POINT,4326)
+            );
+
+        INSERT INTO test_loc_solver(country,plz,geom) VALUES
+        {','.join([f'''('{ct}','{zc}',NULL)''' for ct,zc in country_args['data']])};
+        """
+    )
+    maindb.add_filler(
+        loc_resolver.LocationResolver(
+            id_col="id",
+            source_db=maindb,
+            loc_col=("country", "plz"),
+            query_table="test_loc_solver",
+            resolver_class="zipcode",
+            resolver_args=dict(
+                country_language=country_args["lang"],
+                country_format=country_args["format"],
             ),
         )
     )

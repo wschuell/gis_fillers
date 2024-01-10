@@ -4,7 +4,9 @@ import copy
 
 
 class Filler(TemplateFiller):
-    def __init__(self, loc_resolve=False, loc_db=None, loc_resolver_args=[], **kwargs):
+    def __init__(
+        self, loc_resolve=True, loc_db="postgis", loc_resolver_args=[], **kwargs
+    ):
         self.loc_resolve = loc_resolve
         self.loc_db = loc_db
         if isinstance(loc_resolver_args, dict):

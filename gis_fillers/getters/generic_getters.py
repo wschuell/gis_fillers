@@ -52,8 +52,15 @@ class LocationPointsGetter(GISGetter):
 
     columns = ("location", "geometry", "lat", "long")
 
-    def __init__(self, location_list, add_noise=False, noise_size=0.01, **kwargs):
-        self.location_list = location_list
+    def __init__(
+        self,
+        location_list,
+        add_noise=False,
+        noise_size=0.01,
+        extra_loc_transform=lambda x: x,
+        **kwargs,
+    ):
+        self.location_list = [extra_loc_transform(l) for l in location_list]
         self.add_noise = add_noise
         self.noise_size = noise_size
         Getter.__init__(self, **kwargs)

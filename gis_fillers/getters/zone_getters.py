@@ -21,7 +21,7 @@ class PopulationGetter(GISGetter):
         zone_level="bezirk",
         zone_attribute="population",
         simplified=True,
-        **kwargs
+        **kwargs,
     ):
         GISGetter.__init__(self, **kwargs)
         self.zone_level = zone_level
@@ -69,6 +69,37 @@ class PopulationGetter(GISGetter):
                 ) AS q2
             ON q1.id=q2.id AND q1.level=q2.level
         ;"""
+
+    def query_as_table(self, tablename):
+        for c in tablename:
+            if c not in string.ascii_letters + string.digits + "_":
+                raise ValueError(f"Unsafe table name: {tablename}")
+        return (
+            f"""CREATE TEMPORARY TABLE IF NOT EXISTS {tablename}
+            (
+            id BIGINT,
+            level BIGINT,
+            population REAL,
+            name TEXT,
+            geometry TEXT,
+            area REAL,
+            PRIMARY KEY (id,level)
+            );
+            INSERT INTO {tablename}
+            (
+            id ,
+            level ,
+            population,
+            name,
+            geometry,
+            area,
+            ) 
+            """
+            + self.query()
+            + f"""
+            --CREATE INDEX IF NOT EXISTS {tablename}_idx ON {tablename}();
+            """
+        )
 
     def query_attributes(self):
         return {

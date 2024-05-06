@@ -84,13 +84,13 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			SELECT 1
-					FROM gis_data gd
-						INNER JOIN zone_levels zl
-						ON zl.name='zaehlsprengel' AND gd.zone_level=zl.id
-						INNER JOIN gis_types gt
-						ON gd.gis_type=gt.id AND gt.name=%s
-			;""",
+            SELECT 1
+                    FROM gis_data gd
+                        INNER JOIN zone_levels zl
+                        ON zl.name='zaehlsprengel' AND gd.zone_level=zl.id
+                        INNER JOIN gis_types gt
+                        ON gd.gis_type=gt.id AND gt.name=%s
+            ;""",
             (self.gis_type,),
         )
         if self.db.cursor.fetchone() is not None and not self.force:
@@ -214,34 +214,34 @@ class ZaehlsprengelFiller(fillers.Filler):
         extras.execute_batch(
             self.db.cursor,
             """INSERT INTO zone_attributes(zone,zone_level,attribute,int_value)--,scenario)
-						SELECT %s, zl.id, zat.id,%s--,s.id
-						FROM zone_levels zl
-						INNER JOIN zone_attribute_types zat
-						ON zl.name='zaehlsprengel' AND zat.name='zs_population'
-						--INNER JOIN scenarios s
-						--ON s.name='nothing'
-						ON CONFLICT DO NOTHING;""",
+                        SELECT %s, zl.id, zat.id,%s--,s.id
+                        FROM zone_levels zl
+                        INNER JOIN zone_attribute_types zat
+                        ON zl.name='zaehlsprengel' AND zat.name='zs_population'
+                        --INNER JOIN scenarios s
+                        --ON s.name='nothing'
+                        ON CONFLICT DO NOTHING;""",
             ((int(r[3]), r[5]) for r in ans),
         )
         self.db.cursor.execute(
             """
-			INSERT INTO zone_attributes(zone,zone_level,attribute,int_value)--,scenario)
-				SELECT z.id, z.level, zat.id,SUM(za.int_value)--,s.id
-						FROM zones z
-						INNER JOIN zone_attribute_types zat
-						ON zat.name='zs_population'
-						--INNER JOIN scenarios s
-						--ON s.name='nothing'
-						INNER JOIN zone_parents zp
-						ON zp.parent=z.id AND zp.parent_level=z.level
-						INNER JOIN zone_levels zl
-						ON zl.name='zaehlsprengel' AND zl.id=zp.child_level
-						INNER JOIN zone_attributes za
-						ON za.zone=zp.child AND za.zone_level=zp.child_level
-						AND za.attribute=zat.id
-				GROUP BY z.id, z.level,zat.id--,s.id
-			ON CONFLICT DO NOTHING
-			;"""
+            INSERT INTO zone_attributes(zone,zone_level,attribute,int_value)--,scenario)
+                SELECT z.id, z.level, zat.id,SUM(za.int_value)--,s.id
+                        FROM zones z
+                        INNER JOIN zone_attribute_types zat
+                        ON zat.name='zs_population'
+                        --INNER JOIN scenarios s
+                        --ON s.name='nothing'
+                        INNER JOIN zone_parents zp
+                        ON zp.parent=z.id AND zp.parent_level=z.level
+                        INNER JOIN zone_levels zl
+                        ON zl.name='zaehlsprengel' AND zl.id=zp.child_level
+                        INNER JOIN zone_attributes za
+                        ON za.zone=zp.child AND za.zone_level=zp.child_level
+                        AND za.attribute=zat.id
+                GROUP BY z.id, z.level,zat.id--,s.id
+            ON CONFLICT DO NOTHING
+            ;"""
         )
         self.db.connection.commit()
 
@@ -268,7 +268,7 @@ class ZaehlsprengelFiller(fillers.Filler):
         topo.toposimplify(simplify_param).to_geojson(fp=output_path)
         del topo
         # with open(output_path,'w') as f:
-        # 	f.write(output)
+        #   f.write(output)
         # del output
 
     def simplify_shapefile_mapshaper(
@@ -350,14 +350,14 @@ class ZaehlsprengelFiller(fillers.Filler):
             extras.execute_batch(
                 self.db.cursor,
                 """
-				INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type) 
-						VALUES (%s,
-								(SELECT id FROM zone_levels WHERE name=%s),
-								ST_SetSRID(ST_MakeValid(ST_GeomFromGeoJSON(%s)),4326),
-								ST_SetSRID(ST_Centroid(ST_MakeValid(ST_GeomFromGeoJSON(%s))),4326),
-								(SELECT id FROM gis_types WHERE name=%s))
-								ON CONFLICT DO NOTHING
-								;""",
+                INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type) 
+                        VALUES (%s,
+                                (SELECT id FROM zone_levels WHERE name=%s),
+                                ST_SetSRID(ST_MakeValid(ST_GeomFromGeoJSON(%s)),4326),
+                                ST_SetSRID(ST_Centroid(ST_MakeValid(ST_GeomFromGeoJSON(%s))),4326),
+                                (SELECT id FROM gis_types WHERE name=%s))
+                                ON CONFLICT DO NOTHING
+                                ;""",
                 (
                     (
                         int(
@@ -491,16 +491,16 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
-										AND zz.id/1000=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
+                                        AND zz.id/1000=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -508,16 +508,16 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling zaehlsprengel bezirk parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='bezirk')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
-										AND zz.id/100000=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='bezirk')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
+                                        AND zz.id/100000=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -525,16 +525,16 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling zaehlsprengel bundesland parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
-										AND zz.id/10000000=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
+                                        AND zz.id/10000000=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -542,16 +542,16 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling gemeinde bezirk parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='bezirk')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
-										AND zz.id/100=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='bezirk')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
+                                        AND zz.id/100=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -559,16 +559,16 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling gemeinde bundesland parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
-										AND zz.id/10000=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='gemeinde')
+                                        AND zz.id/10000=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -576,16 +576,16 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling bezirk bundesland parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
-										AND zz.level=(SELECT id FROM zone_levels WHERE name='bezirk')
-										AND zz.id/100=zg.id
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='bundesland')
+                                        AND zz.level=(SELECT id FROM zone_levels WHERE name='bezirk')
+                                        AND zz.id/100=zg.id
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -593,17 +593,17 @@ class ZaehlsprengelFiller(fillers.Filler):
         self.logger.info("Filling all country parents")
         self.db.cursor.execute(
             """
-			INSERT INTO zone_parents(parent_level,parent,child_level,child)
-							(SELECT zg.level,zg.id,zz.level,zz.id FROM
-								zones zg
-								INNER JOIN zones zz
-									ON zg.level=(SELECT id FROM zone_levels WHERE name='country')
-									AND zg.code = 'AT'
-								INNER JOIN (VALUES  ('zaehlsprengel'),('bezirk'),('bundesland'),('gemeinde')) as l(lev_name)
-										ON zz.level=(SELECT id FROM zone_levels WHERE name=l.lev_name)
-							)
-								ON CONFLICT DO NOTHING
-								;"""
+            INSERT INTO zone_parents(parent_level,parent,child_level,child)
+                            (SELECT zg.level,zg.id,zz.level,zz.id FROM
+                                zones zg
+                                INNER JOIN zones zz
+                                    ON zg.level=(SELECT id FROM zone_levels WHERE name='country')
+                                    AND zg.code = 'AT'
+                                INNER JOIN (VALUES  ('zaehlsprengel'),('bezirk'),('bundesland'),('gemeinde')) as l(lev_name)
+                                        ON zz.level=(SELECT id FROM zone_levels WHERE name=l.lev_name)
+                            )
+                                ON CONFLICT DO NOTHING
+                                ;"""
         )
         self.db.connection.commit()
 
@@ -617,17 +617,17 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
-				SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
-					FROM gis_data gd
-						INNER JOIN zone_parents zp
-							ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
-							AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
-							AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='gemeinde')
-							AND zp.child_level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
-					GROUP BY zp.parent,zp.parent_level
-				ON CONFLICT DO NOTHING
-			;""",
+            INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
+                SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
+                    FROM gis_data gd
+                        INNER JOIN zone_parents zp
+                            ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
+                            AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
+                            AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='gemeinde')
+                            AND zp.child_level=(SELECT id FROM zone_levels WHERE name='zaehlsprengel')
+                    GROUP BY zp.parent,zp.parent_level
+                ON CONFLICT DO NOTHING
+            ;""",
             (
                 gis_type,
                 gis_type,
@@ -646,17 +646,17 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
-				SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
-					FROM gis_data gd
-						INNER JOIN zone_parents zp
-							ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
-							AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
-							AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='bezirk')
-							AND zp.child_level=(SELECT id FROM zone_levels WHERE name='gemeinde')
-					GROUP BY zp.parent,zp.parent_level
-				 ON CONFLICT DO NOTHING
-			;""",
+            INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
+                SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
+                    FROM gis_data gd
+                        INNER JOIN zone_parents zp
+                            ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
+                            AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
+                            AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='bezirk')
+                            AND zp.child_level=(SELECT id FROM zone_levels WHERE name='gemeinde')
+                    GROUP BY zp.parent,zp.parent_level
+                 ON CONFLICT DO NOTHING
+            ;""",
             (
                 gis_type,
                 gis_type,
@@ -675,17 +675,17 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
-				SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
-					FROM gis_data gd
-						INNER JOIN zone_parents zp
-							ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
-							AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
-							AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='bundesland')
-							AND zp.child_level=(SELECT id FROM zone_levels WHERE name='bezirk')
-					GROUP BY zp.parent,zp.parent_level
-				 ON CONFLICT DO NOTHING
-			;""",
+            INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
+                SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
+                    FROM gis_data gd
+                        INNER JOIN zone_parents zp
+                            ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
+                            AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
+                            AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='bundesland')
+                            AND zp.child_level=(SELECT id FROM zone_levels WHERE name='bezirk')
+                    GROUP BY zp.parent,zp.parent_level
+                 ON CONFLICT DO NOTHING
+            ;""",
             (
                 gis_type,
                 gis_type,
@@ -701,17 +701,17 @@ class ZaehlsprengelFiller(fillers.Filler):
 
         self.db.cursor.execute(
             """
-			INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
-				SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
-					FROM gis_data gd
-						INNER JOIN zone_parents zp
-							ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
-							AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
-							AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='country')
-							AND zp.child_level=(SELECT id FROM zone_levels WHERE name='bundesland')
-					GROUP BY zp.parent,zp.parent_level
-				 ON CONFLICT DO NOTHING
-			;""",
+            INSERT INTO gis_data(zone_id,zone_level,geom,center,gis_type)
+                SELECT zp.parent,zp.parent_level,ST_Union(gd.geom),ST_Centroid(ST_Union(gd.geom)),(SELECT id FROM gis_types WHERE name=%s)
+                    FROM gis_data gd
+                        INNER JOIN zone_parents zp
+                            ON zp.child=gd.zone_id AND zp.child_level=gd.zone_level
+                            AND gd.gis_type=(SELECT id FROM gis_types WHERE name=%s)
+                            AND zp.parent_level=(SELECT id FROM zone_levels WHERE name='country')
+                            AND zp.child_level=(SELECT id FROM zone_levels WHERE name='bundesland')
+                    GROUP BY zp.parent,zp.parent_level
+                 ON CONFLICT DO NOTHING
+            ;""",
             (
                 gis_type,
                 gis_type,
@@ -738,21 +738,21 @@ class PopulationZSFiller(ZaehlsprengelFiller):
     def check_done(self):
         self.db.cursor.execute(
             """
-				SELECT z.id, z.level, zat.id--,s.id
-						FROM zones z
-						INNER JOIN zone_attribute_types zat
-						ON zat.name='zs_population'
-						--INNER JOIN scenarios s
-						--ON s.name='nothing'
-						INNER JOIN zone_parents zp
-						ON zp.parent=z.id AND zp.parent_level=z.level
-						INNER JOIN zone_levels zl
-						ON zl.name='zaehlsprengel' AND zl.id=zp.child_level
-						INNER JOIN zone_attributes za
-						ON za.zone=zp.child AND za.zone_level=zp.child_level
-						AND za.attribute=zat.id
-				LIMIT 1
-				;"""
+                SELECT z.id, z.level, zat.id--,s.id
+                        FROM zones z
+                        INNER JOIN zone_attribute_types zat
+                        ON zat.name='zs_population'
+                        --INNER JOIN scenarios s
+                        --ON s.name='nothing'
+                        INNER JOIN zone_parents zp
+                        ON zp.parent=z.id AND zp.parent_level=z.level
+                        INNER JOIN zone_levels zl
+                        ON zl.name='zaehlsprengel' AND zl.id=zp.child_level
+                        INNER JOIN zone_attributes za
+                        ON za.zone=zp.child AND za.zone_level=zp.child_level
+                        AND za.attribute=zat.id
+                LIMIT 1
+                ;"""
         )
         return self.db.cursor.fetchone() is not None
 
@@ -784,9 +784,9 @@ class PLZFiller(fillers.Filler):
             os.makedirs(data_folder)
 
         # self.db.cursor.execute('''
-        # 	SELECT * FROM plz_gemeinde
-        # 	LIMIT 1
-        # 	;''')
+        #   SELECT * FROM plz_gemeinde
+        #   LIMIT 1
+        #   ;''')
         # query_ans = self.db.cursor.fetchone()
         query_ans = None
         if query_ans is not None:
@@ -820,11 +820,11 @@ class PLZFiller(fillers.Filler):
         extras.execute_batch(
             self.db.cursor,
             """INSERT INTO plz_gemeinde(plz,gemeinde,gemeinde_name)
-				VALUES(%(plz)s,
-					%(gemeinde)s,
-					%(gemeinde_name)s)
-				 ON CONFLICT DO NOTHING
-				 ;""",
+                VALUES(%(plz)s,
+                    %(gemeinde)s,
+                    %(gemeinde_name)s)
+                 ON CONFLICT DO NOTHING
+                 ;""",
             (
                 {"plz": plz, "gemeinde": gd, "gemeinde_name": gd_n}
                 for (gd, gd_n, plz) in insert_input

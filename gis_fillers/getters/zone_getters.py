@@ -93,7 +93,7 @@ class PopulationGetter(GISGetter):
             population,
             name,
             geometry,
-            area,
+            area
             ) 
             """
             + self.query()

@@ -7,6 +7,7 @@ import shapely
 import time
 import geopandas as gpd
 import pandas as pd
+import string
 
 
 class PopulationGetter(GISGetter):
